@@ -1,12 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Axios from "axios";
 
-const MainPage = () => {
-  return (
-    <div>
-      <h3>Hello it is the </h3>
-      <p>Main page</p>
-    </div>
-  );
-};
+export default function MainPage(props) {
+    const loginStatus = props.loginStatus;
+    const username = props.userName;
 
-export default MainPage;
+  if (loginStatus === true) {
+    return(
+      <div>
+        <h3>Hey {username}, good to see you again!</h3>
+        <p>Main page</p>
+      </div>)
+    
+  } else {
+    return (
+      <div>
+        <h3>Hey stranger, you should log in</h3>
+        <p>Main page</p>
+      </div>
+    );
+  }
+}
