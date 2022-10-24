@@ -19,13 +19,16 @@ import NotFoundPage from "./pages/404";
 import CreateUser from "./pages/createUser";
 import Login from "./pages/login";
 import Admin from "./pages/admin";
-import Search1 from "./pages/search";
+import MallSearch from "./pages/mallSearch";
+import ItemSearch from "./pages/itemSearch";
 import Axios from "axios";
 //import axios, { Axios } from "axios";
 
 function App() {
   const [userName, setUserName] = useState("");
   const [loginStatus, setLoginStatus] = useState("");
+  const [mallSelection, setMallSelection] = useState("");
+  
   Axios.defaults.withCredentials = true;
   useEffect(() => {
     Axios.get("http://localhost:3001/api/login").then((response) => {
@@ -66,8 +69,25 @@ function App() {
         />
         <Route
           exact
-          path="/search"
-          element={<Search1 loginStatus={loginStatus} userName={userName} />}
+          path="/mallSearch"
+          element={
+            <MallSearch
+              loginStatusSent={loginStatus}
+              userName={userName}
+              setSelection={setMallSelection}
+            />
+          }
+        />
+        <Route
+          exact
+          path="/itemSearch"
+          element={
+            <ItemSearch
+              loginStatus={loginStatus}
+              userName={userName}
+              selection={mallSelection}
+            />
+          }
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

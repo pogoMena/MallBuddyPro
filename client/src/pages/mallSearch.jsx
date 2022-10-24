@@ -13,11 +13,35 @@ import {
   ComboboxInput,
 } from "@reach/combobox";
 import "@reach/combobox/styles.css";
+import { Navigate, useNavigate } from "react-router-dom";
 
-export default function Search1(props) {
-  const loginStatus = props.loginStatus;
+
+
+
+
+
+
+
+//export default function MallSearch(props) {
+export default function MallSearch({loginStatusSent, username, setSelection}) {
+  const loginStatus = loginStatusSent;
+
   const [currentPosition, setCurrentPosition] = useState("");
   const [locationPermissionGiven, setLocationPermissionGiven] = useState("");
+
+  //We will see if this works
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+
+  
 
   //either sets position to current position, or sets it to a random default and
   useEffect(() => {
@@ -57,25 +81,28 @@ export default function Search1(props) {
     // waits for location and checks if location permission was given
     return <div>Waiting for location</div>;
   }
-  return <Map center={currentPosition} />;
+  return <Map center={currentPosition} setMallSelection={setSelection} />;
 }
 
 
 //Gets the closest malls if location is given
 //gets malls closest to previous mall if no location was given but user logged in and has used it before
 //if neither of the others, shows whole world and lets user type in mall names i guess
-const PlacesAutocomplete = ({ setSelected, defaultCenter }) => {
-    console.log("Default center in autocomplete VVV");
-    console.log(defaultCenter);
-//gets the default bounds
-const center = defaultCenter;
-// Create a bounding box with sides ~10km away from the center point
-const defaultBounds = {
-  north: center.lat + 0.1,
-  south: center.lat - 0.1,
-  east: center.lng + 0.1,
-  west: center.lng - 0.1,
-};
+const PlacesAutocomplete = ({
+  //setSelected,
+  defaultCenter,
+  setMallFinalSelection,
+}) => {
+  //gets the default bounds
+  const center = defaultCenter;
+  const navigate = useNavigate();
+  // Create a bounding box with sides ~10km away from the center point
+  const defaultBounds = {
+    north: center.lat + 0.1,
+    south: center.lat - 0.1,
+    east: center.lng + 0.1,
+    west: center.lng - 0.1,
+  };
 
   const {
     ready,
@@ -94,10 +121,22 @@ const defaultBounds = {
     setValue(address, false);
     clearSuggestions();
     const results = await getGeocode({ address });
-    const { lat, lng } = await getLatLng(results[0]);
-    setSelected({ lat, lng });
-    console.log(results);
-    
+    //const { lat, lng } = await getLatLng(results[0]);
+    //setSelected({ lat, lng });
+    //console.log(results);
+
+    //
+    //
+    //
+    //
+
+    setMallFinalSelection(results);
+    navigate("/itemSearch");
+
+    //
+    //
+    //
+    //
   };
 
   return (
@@ -121,24 +160,28 @@ const defaultBounds = {
   );
 };
 
-function Map(props) {
+function Map({ center, setMallSelection}) {
   const centerTaken = {
-    lat: props.center.latitude,
-    lng: props.center.longitude,
+    lat: center.latitude,
+    lng: center.longitude,
   };
 
-  const [selected, setSelected] = useState("");
+  //const [selected, setSelected] = useState("");
 
   return (
     <div>
       <div className="places-container">
-        <PlacesAutocomplete setSelected={setSelected} defaultCenter={centerTaken}/>
+        <PlacesAutocomplete
+          //setSelected={setSelected}
+          defaultCenter={centerTaken}
+          setMallFinalSelection={setMallSelection}
+        />
       </div>
       <GoogleMap
         zoom={12}
         center={centerTaken}
         mapContainerClassName="map-container">
-        {selected && <Marker position={selected} />}
+        
       </GoogleMap>
     </div>
   );

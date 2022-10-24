@@ -11,9 +11,6 @@ export default function Navbar(props) {
 
   const userLogout = () => {
     Axios.post("http://localhost:3001/api/logout").then((response) => {
-     
-    console.log("I mean this much worked at least");
-    console.log(response);
     window.location.reload(false);
     
     });
@@ -43,7 +40,7 @@ export default function Navbar(props) {
     </Link>
   );
   const searchPageLink = (
-    <Link className="btn btn-outline-light" to="/search">
+    <Link className="btn btn-outline-light" to="/mallSearch">
       search
     </Link>
   );

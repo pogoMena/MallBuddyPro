@@ -8,6 +8,19 @@ export default function Admin(props) {
       setUsers(response.data);
     });
   });
+
+  const deleteUser = (id) => {
+    Axios.post("http://localhost:3001/api/delete", {
+      id: id
+    });
+  };
+
+  const updateUser = (id) => {
+    Axios.post("http://localhost:3001/api/update", {
+      id: id,
+    });
+  };
+
   if (props.loginStatus === true) {
     if (props.userName === "admin1") {
       return (
@@ -30,8 +43,8 @@ export default function Admin(props) {
                       <th scope="row">{val.id}</th>
                       <td>{val.username}</td>
                       <td>{val.password}</td>
-                      <td>update</td>
-                      <td>delete</td>
+                      <td key={val.id}>update</td>
+                      <td key={val.id}>delete</td>
                     </tr>
                   );
                 })}
