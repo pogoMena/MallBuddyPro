@@ -26,6 +26,7 @@ import Axios from "axios";
 
 function App() {
   const [userName, setUserName] = useState("");
+  const [admin, setAdmin] = useState("");
   const [loginStatus, setLoginStatus] = useState("");
   const [mallSelection, setMallSelection] = useState("");
   
@@ -34,6 +35,7 @@ function App() {
     Axios.get("http://localhost:3001/api/login").then((response) => {
       if (response.data.loggedIn === true) {
         setUserName(response.data.user[0].username);
+        setAdmin(response.data.user[0].admin);
         setLoginStatus(true);
         console.log("in if");
       }else{
@@ -45,7 +47,7 @@ function App() {
 
   return (
     <Router>
-      <Navbar loginStatus={loginStatus} userName={userName} />
+      <Navbar loginStatus={loginStatus} userName={userName} admin={admin} />
       <Routes>
         <Route
           exact
@@ -65,7 +67,13 @@ function App() {
         <Route
           exact
           path="/admin"
-          element={<Admin loginStatus={loginStatus} userName={userName} />}
+          element={
+            <Admin
+              loginStatus={loginStatus}
+              userName={userName}
+              admin={admin}
+            />
+          }
         />
         <Route
           exact

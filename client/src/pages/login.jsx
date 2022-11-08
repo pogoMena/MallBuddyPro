@@ -34,26 +34,35 @@ export default function Login() {
   return (
     <div>
       <div>
-        <h3>Login</h3>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username..."
-          onChange={(e) => {
-            setUsernameLog(e.target.value);
-          }}
-        />
-        <input
-          type="text"
-          name="password"
-          placeholder="Password..."
-          onChange={(e) => {
-            setPasswordLog(e.target.value);
-          }}
-        />
-        <button onClick={userLogin} href="/">
-          Login
-        </button>
+        <div className="row text-center">
+          <h3>Login</h3>
+        </div>
+        <div className="row mx-auto w-50">
+          <input
+            type="text"
+            name="username"
+            placeholder="Username..."
+            onChange={(e) => {
+              setUsernameLog(e.target.value);
+            }}
+          />
+        </div>
+        <div className="row mx-auto w-50">
+          <input
+            className=""
+            type="password"
+            name="password"
+            placeholder="Password..."
+            onChange={(e) => {
+              setPasswordLog(e.target.value);
+            }}
+          />
+        </div>
+        <div className="row mx-auto w-25">
+          <button onClick={userLogin} href="/">
+            Login
+          </button>
+        </div>
       </div>
       <h3>{loginStatus}</h3>
     </div>

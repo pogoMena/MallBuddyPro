@@ -15,7 +15,7 @@ export default function MainPage(props) {
   } else {
     return (
       <div>
-        <h3>Hey stranger, you should log in</h3>
+        <h3>Hey guest, you should log in</h3>
         <p>Main page</p>
       </div>
     );

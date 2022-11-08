@@ -4,64 +4,54 @@ import Axios from "axios";
 
 export default function Navbar(props) {
   const userName = props.userName;
+  const admin = props.admin;
   const loginStatus = props.loginStatus;
   const links = [];
-  
-
 
   const userLogout = () => {
     Axios.post("http://localhost:3001/api/logout").then((response) => {
-    window.location.reload(false);
-    
+      window.location.reload(false);
     });
   };
 
-
   //All links
   const loginLink = (
-    <Link className="btn btn-outline-light" to="/login">
+    <Link className="btn btn-outline-light" to="/login" key="login">
       Login
     </Link>
   );
   const logoutLink = (
-    <Link className="btn btn-outline-light" to="/" onClick={userLogout}>
+    <Link
+      className="btn btn-outline-light"
+      to="/"
+      onClick={userLogout}
+      key="logut">
       Logout
     </Link>
   );
 
   const adminLink = (
-    <Link className="btn btn-outline-light" to="/admin">
+    <Link className="btn btn-outline-light" to="/admin" key="admin">
       admin
     </Link>
   );
   const signUpLink = (
-    <Link className="btn btn-outline-light" to="/signup">
+    <Link className="btn btn-outline-light" to="/signup" key="signup">
       Sign up
     </Link>
   );
   const searchPageLink = (
-    <Link className="btn btn-outline-light" to="/mallSearch">
+    <Link className="btn btn-outline-light" to="/mallSearch" key="search">
       search
     </Link>
   );
-/*
-  useEffect(() => {
-    Axios.get("http://localhost:3001/api/login").then((response) => {
-      if (response.data.loggedIn === true) {
-        setUserName(response.data.user[0].username);
-        setLoginStatus(true);
-      }
-    });
-  }, []);
-  */
 
   if (loginStatus === true) {
     console.log("Logged in");
-    if (userName === "admin1") {
+    if (admin) {
       links.push(adminLink);
     }
-      links.push(logoutLink);
-    
+    links.push(logoutLink);
   } else if (loginStatus === false) {
     console.log("not logged in");
     links.push(loginLink);

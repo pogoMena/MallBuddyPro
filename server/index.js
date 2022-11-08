@@ -51,14 +51,14 @@ app.get("/api/get", (req, res) => {
   });
 });
 
-//NEEDS TO CHECK FOR EXISTING USER
 //Create new user (For signup page)
-app.post("/api/insert", (req, res) => {
+app.post("/api/createuser", (req, res) => {
   const usernameRes = req.body.username;
   const passwordRes = req.body.password;
+  const email = req.body.email;
 
-  //const sqlLogin = "SELECT * FROM users WHERE username = ?;";
-  const sqlInsert = "INSERT INTO users (username, password) VALUES (?, ?)";
+  const sqlInsert =
+    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
 
   const sqlLogin = "SELECT * FROM users WHERE username = ?;";
   db.query(sqlLogin, usernameRes, (err, result) => {
@@ -71,7 +71,7 @@ app.post("/api/insert", (req, res) => {
         if (err) {
           console.log(err);
         }
-        db.query(sqlInsert, [usernameRes, hash], (err, result) => {
+        db.query(sqlInsert, [usernameRes, hash, email], (err, result) => {
           res.send({ message: "User successfully inserted" });
         });
       });
@@ -108,6 +108,7 @@ app.post("/api/login", (req, res) => {
   });
 });
 
+//Checks if user is logged in
 app.get("/api/login", (req, res) => {
   if (req.session.user) {
     res.send({ loggedIn: true, user: req.session.user });
@@ -116,32 +117,57 @@ app.get("/api/login", (req, res) => {
   }
 });
 
+//Logs out
 app.post("/api/logout", (req, res) => {
-    console.log("backend sees it");
-    delete req.session.user;
+  delete req.session.user;
   res.send({ loggedIn: false });
+});
+
+app.post("/api/insertstores", (req, res) => {
+  const sqlInsert = "INSERT INTO stores (store_name) VALUES (?);";
+
+  const sqlLogin = "SELECT * FROM stores WHERE store_name = ?;";
+
+  req.body.stores.forEach((element) => {
+    db.query(sqlLogin, element.name, (err, result) => {
+      if (err) {
+        res.send({ err: err });
+      }
+      if (result.length == 0) {
+        db.query(sqlInsert, element.name, (err, result) => {
+          console.log(res)
+        });
+        console.log(element.name);
+      }
+    });
+  });
+});
+
+app.post("/api/getreviews", (req, res) => {
+    const storeName = req.body.store;
+  const sqlGet = "SELECT reviews.review_id, reviews.rating, reviews.review, users.username FROM reviews INNER JOIN users ON reviews.user_id=users.user_id WHERE store_id = (SELECT store_id FROM stores WHERE store_name=(?));";
+  db.query(sqlGet, storeName, (err, result) => {
+    res.send(result);
+  });
+});
+
+/*
+THIS IS MY NEXT STEP
+
+*/
+app.post("/api/submitreview", (req, res) => {
+  console.log(req.body);
+  const review = req.body.review
+  const rating = req.body.rating
+  const storeName = req.body.store;
+  const userName = req.body.userName;
+  const sqlInsert ="INSERT INTO reviews (rating,review,user_id,store_id)VALUES ((?),(?),((SELECT user_id FROM users WHERE username=(?))),((SELECT store_id FROM stores WHERE store_name=(?))));";
+  db.query(sqlInsert, [rating, review, userName, storeName], (err, result) => {
+    res.send(result);
+    console.log(result);
+  });
 });
 
 app.listen(3001, () => {
   console.log("running on port 3001");
 });
-
-//Trying to figure out the inserting new user while checking first
-/*
-app.post("/api/insert", (req, res) => {
-  const usernameRes = req.body.username;
-  const passwordRes = req.body.password;
-
-  //const sqlLogin = "SELECT * FROM users WHERE username = ?;";
-  const sqlInsert = "INSERT INTO users (username, password) VALUES (?, ?)";
-
-  bcrypt.hash(passwordRes, saltRounds, (err, hash) => {
-    if (err) {
-      console.log(err);
-    }
-    db.query(sqlInsert, [usernameRes, hash], (err, result) => {
-      console.log(err);
-    });
-  });
-});
-*/

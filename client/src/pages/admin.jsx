@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Axios from "axios";
 
 export default function Admin(props) {
+    const admin = props.admin;
   const [userList, setUsers] = useState([]);
   useEffect(() => {
     Axios.get("http://localhost:3001/api/get", {}).then((response) => {
@@ -22,7 +23,7 @@ export default function Admin(props) {
   };
 
   if (props.loginStatus === true) {
-    if (props.userName === "admin1") {
+    if (admin) {
       return (
         <div className="container">
           <div className="py-4">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Axios from "axios";
-import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Marker} from "@react-google-maps/api";
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -81,7 +81,7 @@ export default function MallSearch({loginStatusSent, username, setSelection}) {
     // waits for location and checks if location permission was given
     return <div>Waiting for location</div>;
   }
-  return <Map center={currentPosition} setMallSelection={setSelection} />;
+  return <Map center={currentPosition} setMallSelection={setSelection}  />;
 }
 
 
@@ -121,22 +121,11 @@ const PlacesAutocomplete = ({
     setValue(address, false);
     clearSuggestions();
     const results = await getGeocode({ address });
-    //const { lat, lng } = await getLatLng(results[0]);
-    //setSelected({ lat, lng });
-    //console.log(results);
 
-    //
-    //
-    //
-    //
-
+    
     setMallFinalSelection(results);
     navigate("/itemSearch");
 
-    //
-    //
-    //
-    //
   };
 
   return (
@@ -165,6 +154,10 @@ function Map({ center, setMallSelection}) {
     lat: center.latitude,
     lng: center.longitude,
   };
+  const options = useMemo(() => ({
+disableDefaultUI: true,
+clickableIcons: false
+  }), []);
 
   //const [selected, setSelected] = useState("");
 
@@ -180,8 +173,8 @@ function Map({ center, setMallSelection}) {
       <GoogleMap
         zoom={12}
         center={centerTaken}
-        mapContainerClassName="map-container">
-        
+        mapContainerClassName="map-container"
+        options = {options}>
       </GoogleMap>
     </div>
   );
