@@ -5,6 +5,7 @@ export default function MainPage(props) {
     const loginStatus = props.loginStatus;
     const username = props.userName;
 
+
   if (loginStatus === true) {
     return(
       <div>

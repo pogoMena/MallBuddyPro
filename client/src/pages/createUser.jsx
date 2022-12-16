@@ -23,33 +23,46 @@ export default function CreateUser() {
 
     return (
       <div>
-        <h3>Sign Up</h3>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username..."
-          onChange={(e) => {
-            setUsernameReg(e.target.value);
-          }}
-        />
-        <input
-          type="text"
-          name="password"
-          placeholder="Password..."
-          onChange={(e) => {
-            setPasswordReg(e.target.value);
-          }}
-        />
-        <input
-          type="text"
-          name="email"
-          placeholder="Email..."
-          onChange={(e) => {
-            setEmailReg(e.target.value);
-          }}
-        />
-        <button onClick={submitUser}>Submit</button>
-        <h3>{creationStatus}</h3>
+        <div className="heading">
+          <h3 className="w-25 mx-auto p-3">Sign Up</h3>
+        </div>
+        <div class="container">
+          <div class="row">
+            <label>Username:</label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username..."
+              onChange={(e) => {
+                setUsernameReg(e.target.value);
+              }}
+            />
+          </div>
+          <div class="row">
+            <label>Password:</label>
+            <input
+              type="text"
+              name="password"
+              placeholder="Password..."
+              onChange={(e) => {
+                setPasswordReg(e.target.value);
+              }}
+            />
+          </div>
+          <div class="row">
+            <label>Email:</label>
+            <input
+              type="text"
+              name="email"
+              placeholder="Email..."
+              onChange={(e) => {
+                setEmailReg(e.target.value);
+              }}
+            />
+          </div>
+          <button onClick={submitUser}>Submit</button>
+          <h3>{creationStatus}</h3>
+        </div>
       </div>
     );
 }

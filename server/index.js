@@ -44,8 +44,42 @@ app.use(
 );
 
 //Get all users (For admin page)
-app.get("/api/get", (req, res) => {
+app.get("/api/getusers", (req, res) => {
   const sqlGet = "SELECT * FROM users";
+  db.query(sqlGet, (err, result) => {
+    res.send(result);
+  });
+});
+
+//Get all malls (For admin page)
+app.get("/api/getmalls", (req, res) => {
+    console.log("from malls");
+  const sqlGet = "SELECT * FROM malls";
+  db.query(sqlGet, (err, result) => {
+    res.send(result);
+  });
+});
+//Get all stores (For admin page)
+app.get("/api/getstores", (req, res) => {
+    console.log("from stores");
+  const sqlGet = "SELECT * FROM stores";
+  db.query(sqlGet, (err, result) => {
+    res.send(result);
+  });
+});
+
+//Get all questions (For admin page/and itemsearch page)
+app.get("/api/getquestions", (req, res) => {
+    console.log("from questions");
+  const sqlGet = "SELECT * from questions ORDER BY answer_type;";
+  db.query(sqlGet, (err, result) => {
+    res.send(result);
+  });
+});
+//Get all answers (For admin page)
+app.get("/api/getanswers", (req, res) => {
+    console.log("from answers");
+  const sqlGet = "SELECT * FROM answers";
   db.query(sqlGet, (err, result) => {
     res.send(result);
   });
@@ -126,47 +160,158 @@ app.post("/api/logout", (req, res) => {
 app.post("/api/insertstores", (req, res) => {
   const sqlInsert = "INSERT INTO stores (store_name) VALUES (?);";
 
-  const sqlLogin = "SELECT * FROM stores WHERE store_name = ?;";
+  const sqlStores = "SELECT * FROM stores WHERE store_name = ?;";
 
   req.body.stores.forEach((element) => {
-    db.query(sqlLogin, element.name, (err, result) => {
+    db.query(sqlStores, element.name, (err, result) => {
       if (err) {
         res.send({ err: err });
       }
       if (result.length == 0) {
-        db.query(sqlInsert, element.name, (err, result) => {
-          console.log(res)
+        db.query(sqlInsert, element.name, (error, res) => {
+          if (err) {
+            console.log(error);
+          }
         });
-        console.log(element.name);
       }
     });
   });
 });
 
+app.post("/api/getavganswer", async (req, res) => {
+  console.log("attempting");
+  
+  const sqlAvgForStore = `select AVG(reviews.rating) AS overallrating, AVG(answers.radio_answer) AS radio_answer, AVG(answers.boolean_answer) AS boolean_answer, answers.question_id, reviews.store_id, stores.store_name
+from stores 
+left join reviews on reviews.store_id = stores.store_id
+left join answers on answers.review_id = reviews.review_id
+WHERE stores.store_name = ?
+GROUP BY reviews.store_id, answers.question_id
+ORDER BY reviews.store_id, answers.question_id;`;
+
+  let bar = new Promise((resolve, reject) => {
+    var store_info = [];
+    req.body.stores.forEach((element, index) => {
+      db.query(sqlAvgForStore, element.name, (err, result) => {
+        if (err) {
+          res.send({ err: err });
+          console.log(err);
+        }
+
+        if (result[0] != undefined) {
+          let tempAnswer = {
+            store_name: result[0].store_name,
+            store_id: result[0].store_id,
+            rating: result[0].overallrating,
+            answers: [],
+          };
+
+          for (var i = 0; i < result.length; i++) {
+            tempAnswer.answers.push({
+              question_id: result[i].question_id,
+              radio_answer: result[i].radio_answer,
+              boolean_answer: result[i].boolean_answer,
+            });
+          }
+          //console.log(tempAnswer.answers);
+          store_info.push(tempAnswer);
+        }
+        //if (index == req.body.stores.length - 1) {
+        if (store_info.length == req.body.stores.length) {
+          //console.log("in if statement index: " + index);
+          //console.log("in if statement length: " + req.body.stores.length);
+          resolve(store_info);
+          reject("error");
+        }
+
+        //console.log("Outside if statement index: " + index);
+        //console.log("Outside if statement length: " + req.body.stores.length);
+      });
+      
+    });
+  });
+
+  bar.then((store_info) => {
+    res.send({ store_info: store_info });
+  });
+});
+
+//Recieves all reviews from a specific store
 app.post("/api/getreviews", (req, res) => {
-    const storeName = req.body.store;
-  const sqlGet = "SELECT reviews.review_id, reviews.rating, reviews.review, users.username FROM reviews INNER JOIN users ON reviews.user_id=users.user_id WHERE store_id = (SELECT store_id FROM stores WHERE store_name=(?));";
+  const storeName = req.body.store;
+  const sqlGet =
+    "SELECT reviews.review_id, reviews.rating, reviews.review, users.username FROM reviews INNER JOIN users ON reviews.user_id=users.user_id WHERE store_id = (SELECT store_id FROM stores WHERE store_name=(?));";
   db.query(sqlGet, storeName, (err, result) => {
     res.send(result);
   });
 });
 
-/*
-THIS IS MY NEXT STEP
-
-*/
-app.post("/api/submitreview", (req, res) => {
-  console.log(req.body);
-  const review = req.body.review
-  const rating = req.body.rating
+app.post("/api/getstoreaverages", (req, res) => {
   const storeName = req.body.store;
-  const userName = req.body.userName;
-  const sqlInsert ="INSERT INTO reviews (rating,review,user_id,store_id)VALUES ((?),(?),((SELECT user_id FROM users WHERE username=(?))),((SELECT store_id FROM stores WHERE store_name=(?))));";
-  db.query(sqlInsert, [rating, review, userName, storeName], (err, result) => {
+  const sqlGet =
+    "SELECT reviews.review_id, reviews.rating, reviews.review, users.username FROM reviews INNER JOIN users ON reviews.user_id=users.user_id WHERE store_id = (SELECT store_id FROM stores WHERE store_name=(?));";
+  db.query(sqlGet, storeName, (err, result) => {
     res.send(result);
-    console.log(result);
   });
 });
+
+//Submits review for a specific store
+app.post("/api/submitreview", (req, res) => {
+  const review = req.body.review;
+  const rating = req.body.rating;
+  const storeName = req.body.store;
+  const userName = req.body.userName;
+  const sqlInsert =
+    "INSERT INTO reviews (rating,review,user_id,store_id)VALUES ((?),(?),((SELECT user_id FROM users WHERE username=(?))),((SELECT store_id FROM stores WHERE store_name=(?))));";
+  db.query(sqlInsert, [rating, review, userName, storeName], (err, result) => {
+    res.send(result);
+  });
+});
+
+//Submits review for a specific store
+app.post("/api/submitanswers", (req, res) => {
+  const review_id = req.body.review_id;
+  const answersArray = req.body.answers;
+  if (review_id != null) {
+    var question_id;
+    var answer_type;
+    var answer;
+    var sqlInsert;
+    for (var i = 0; i < answersArray.length; i++) {
+      
+      question_id = answersArray[i].question_id;
+      answer_type = answersArray[i].answer_type;
+      answer = answersArray[i].answer;
+      if (
+        answer_type === 2 ||
+        (answer_type === 1 && answer !== 0) ||
+        (answer_type === 0 && answer !== "")
+      ) {
+        if (answer_type == 0) {
+          sqlInsert =
+            "INSERT INTO answers (question_id,review_id,text_answer)VALUES ((?),(?),(?));";
+        } else if (answer_type == 1) {
+          answer = parseInt(answer);
+          sqlInsert =
+            "INSERT INTO answers (question_id,review_id,radio_answer)VALUES ((?),(?),(?));";
+        } else if (answer_type == 2) {
+          answer = parseInt(answer);
+          sqlInsert =
+            "INSERT INTO answers (question_id,review_id,boolean_answer)VALUES ((?),(?),(?));";
+        }
+
+        db.query(sqlInsert, [question_id, review_id, answer], (err, result) => {
+          if (err) {
+            console.log(err);
+          }
+        });
+      }
+    }
+  }
+
+});
+
+
 
 app.listen(3001, () => {
   console.log("running on port 3001");

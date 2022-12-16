@@ -16,13 +16,13 @@ export default function Navbar(props) {
 
   //All links
   const loginLink = (
-    <Link className="btn btn-outline-light" to="/login" key="login">
+    <Link className="btn btn-outline-light m-1" to="/login" key="login">
       Login
     </Link>
   );
   const logoutLink = (
     <Link
-      className="btn btn-outline-light"
+      className="btn btn-outline-light m-1"
       to="/"
       onClick={userLogout}
       key="logut">
@@ -31,18 +31,18 @@ export default function Navbar(props) {
   );
 
   const adminLink = (
-    <Link className="btn btn-outline-light" to="/admin" key="admin">
-      admin
+    <Link className="m-1 btn btn-outline-light ml-1" to="/admin" key="admin">
+      Admin
     </Link>
   );
   const signUpLink = (
-    <Link className="btn btn-outline-light" to="/signup" key="signup">
+    <Link className="m-1 btn btn-outline-light" to="/signup" key="signup">
       Sign up
     </Link>
   );
   const searchPageLink = (
-    <Link className="btn btn-outline-light" to="/mallSearch" key="search">
-      search
+    <Link className="m-1 btn btn-outline-light" to="/mallSearch" key="search">
+      Search
     </Link>
   );
 
@@ -75,8 +75,10 @@ export default function Navbar(props) {
             aria-expanded="false"
             aria-label="Toggle Navigation">
             <span className="navbar-toggler-icon"></span>
+
+            {links}
           </button>
-          {links}
+          <div className="">{links}</div>
         </div>
       </nav>
     </div>

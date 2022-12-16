@@ -22,7 +22,6 @@ import Admin from "./pages/admin";
 import MallSearch from "./pages/mallSearch";
 import ItemSearch from "./pages/itemSearch";
 import Axios from "axios";
-//import axios, { Axios } from "axios";
 
 function App() {
   const [userName, setUserName] = useState("");
