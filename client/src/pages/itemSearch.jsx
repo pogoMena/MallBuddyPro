@@ -34,37 +34,56 @@ export default function ItemSearch({ loginStatus, userName, selection }) {
   const [center, setCenter] = useState("");
   const [shortAddress, setShortAddress] = useState("");
   const [questions, setQuestions] = useState("");
+  const [mall_id, setMallID] = useState("");
+  const [mallSpecific, setMallSpecific] = useState("");
 
   //Gets the center of the mall
   useEffect(() => {
     const fetchData = async () => {
-      const { lat, lng } = await getLatLng(selection[0]);
-      function getCenter(selection) {
-        return { lat, lng };
-      }
-      setCenter(getCenter({ selection }));
+      setCenter({
+        lat: parseFloat(selection.lat),
+        lng: parseFloat(selection.lng),
+      });
 
       //Gets the street number and street name from the selection
-      setShortAddress(
-        selection[0].address_components[0].long_name +
-          " " +
-          selection[0].address_components[1].short_name
-      );
+      setShortAddress(selection.short_address);
+
+      let tempMall = {
+        mall_name: selection.mall_name,
+        mall_lat: selection.lat,
+        mall_lng: selection.lng,
+        mall_address: selection.short_address,
+      };
+      insertMall(tempMall);
     };
+    //
+    //Add mall to malls if it isnt already there
+    //
+
     fetchData().catch(console.error);
+
     getQuestions();
+    setMallSpecific(false);
   }, [selection]);
 
   //Gets all questions for sortBy dropdown
 
-  const getQuestions = () => {
-    console.log("getting questions");
-    Axios.get("http://localhost:3001/api/getquestions", {}).then(
-      (response) => {
-        console.log(response)
-        setQuestions(response.data);
+  const insertMall = (mall) => {
+    Axios.post("http://localhost:3001/api/insertmall", { mall }).then(
+      (responsarino) => {
+        Axios.post("http://localhost:3001/api/getmallid", {
+          mall_name: mall.mall_name,
+        }).then((response) => {
+          setMallID(response.data[0].mall_id);
+        });
       }
     );
+  };
+
+  const getQuestions = () => {
+    Axios.get("http://localhost:3001/api/getquestions", {}).then((response) => {
+      setQuestions(response.data);
+    });
   };
 
   //checks if map is loaded
@@ -80,6 +99,9 @@ export default function ItemSearch({ loginStatus, userName, selection }) {
       shortAddress={shortAddress}
       userName={userName}
       questions={questions}
+      mall_id={mall_id}
+      setMallSpecific={setMallSpecific}
+      mallSpecific={mallSpecific}
     />
   );
 }
@@ -90,8 +112,11 @@ const GetStores = ({
   setStoreInfo,
   defaultCenter,
   defaultBounds,
+  setMallSpecific,
   shortAddress,
   questions,
+  mallSpecific,
+  mall_id,
 }) => {
   const {
     ready,
@@ -104,25 +129,38 @@ const GetStores = ({
   } = usePlacesAutocomplete({
     requestOptions: {
       bounds: defaultBounds,
-      radius: "100",
+      radius: "25",
     },
   });
 
   //Adds stores to database if they havent been added yet
   const submitStores = (stores) => {
+    console.log("in insert stores");
     Axios.post("http://localhost:3001/api/insertstores", {
       stores,
     });
   };
 
+  const getSpecificOrNonSpecificHandler = (stores) => {
+    if (mallSpecific) {
+      getStoreAveragesMallSpecific(stores);
+    } else {
+      getStoreAverages(stores);
+    }
+  };
+
   const getStoreAverages = (stores) => {
+    console.log("in storeAverages");
     Axios.post("http://localhost:3001/api/getavganswer", {
       stores,
-    }).then((response) => {
-      setStoreInfo(response.data.store_info);
+    }).then((thisresponse) => {
+      console.log("just got the response");
+
+      setStoreInfo(JSON.parse(JSON.stringify(thisresponse.data.store_info)));
+      console.log(JSON.stringify(thisresponse.data.store_info));
 
       let modifiedStores = stores;
-      let baseAverages = response.data.store_info;
+      let baseAverages = thisresponse.data.store_info;
 
       //Sets an array of all questions with "0" as the base answer
       var initialAnswers = [];
@@ -146,7 +184,7 @@ const GetStores = ({
             let tempAnswers = JSON.parse(JSON.stringify(initialAnswers)); //Sets all answers to 0 initially
             baseAverages[i].answers.forEach((average, indexB) => {
               if (average.question_id !== null) {
-                for (var j = indexB; j < questions.length; j++) {
+                for (var j = 0; j < questions.length; j++) {
                   if (tempAnswers[j].question_id === average.question_id) {
                     tempAnswers[j].radio_answer = average.radio_answer;
                     tempAnswers[j].boolean_answer = average.boolean_answer;
@@ -155,50 +193,136 @@ const GetStores = ({
                 }
               }
             });
+
             baseAverages[i].answers = tempAnswers;
 
             let tempStore = Object.assign({}, store, {
               averagesInfo: baseAverages[i],
             });
+            console.log("temp storeVV");
+            console.log(tempStore.name);
+            console.log(tempStore.averagesInfo.answers);
 
-            //Sets the current store as the store including avg info
-            //console.log(tempStore)
             modifiedStores[index] = tempStore;
 
             break;
           }
         }
-
-        //When done, sets the markers to the modiefied stores
-        setMarkers(modifiedStores);
       });
+      //When done, sets the markers to the modiefied stores
+      console.log("its at modified");
+      console.log(modifiedStores);
+      setMarkers(modifiedStores);
+    });
+  };
+
+  const getStoreAveragesMallSpecific = (stores) => {
+    console.log("in storeAveragesSpecific");
+    Axios.post("http://localhost:3001/api/getavganswermallspecific", {
+      stores,
+      mall_id,
+    }).then((thisresponse) => {
+      console.log("just got the response");
+
+      setStoreInfo(JSON.parse(JSON.stringify(thisresponse.data.store_info)));
+      console.log(JSON.stringify(thisresponse.data.store_info));
+
+      let modifiedStores = stores;
+      let baseAverages = thisresponse.data.store_info;
+
+      //Sets an array of all questions with "0" as the base answer
+      var initialAnswers = [];
+
+      for (let inc = 0; inc < questions.length; inc++) {
+        let emptyAnswerForInitialCreation = {
+          question_id: questions[inc].question_id,
+          radio_answer: 0,
+          boolean_answer: 0,
+        };
+        initialAnswers.push(emptyAnswerForInitialCreation);
+      }
+
+      //Takes the base store from google and adds the averages to it
+      modifiedStores.forEach(function (store, index) {
+        for (var i = 0; i < baseAverages.length; i++) {
+          //If this is the right store, adds info to it
+          if (baseAverages[i].store_name === store.name) {
+            //Goes through each answer for each store and sets it to the correct value
+            //The ultimate goal of this it make sure all stores have an equal number of answers (zero if null)
+            let tempAnswers = JSON.parse(JSON.stringify(initialAnswers)); //Sets all answers to 0 initially
+            baseAverages[i].answers.forEach((average, indexB) => {
+              if (average.question_id !== null) {
+                for (var j = 0; j < questions.length; j++) {
+                  if (tempAnswers[j].question_id === average.question_id) {
+                    tempAnswers[j].radio_answer = average.radio_answer;
+                    tempAnswers[j].boolean_answer = average.boolean_answer;
+                    break;
+                  }
+                }
+              }
+            });
+
+            baseAverages[i].answers = tempAnswers;
+
+            let tempStore = Object.assign({}, store, {
+              averagesInfo: baseAverages[i],
+            });
+            console.log("temp storeVV");
+            console.log(tempStore.name);
+            console.log(tempStore.averagesInfo.answers);
+
+            modifiedStores[index] = tempStore;
+
+            break;
+          }
+        }
+      });
+      //When done, sets the markers to the modiefied stores
+      console.log("its at modified");
+      console.log(modifiedStores);
+      setMarkers(modifiedStores);
     });
   };
 
   const handleSelect = async (event) => {
     event.preventDefault();
 
+    console.log("Defaults");
+    console.log(defaultCenter);
+    console.log(defaultBounds);
+
     let placesService = new window.google.maps.places.PlacesService(
-      //document.getElementById("map")
       document.getElementById("idk")
     );
     const request = {
       query: JSON.stringify(value),
       bounds: defaultBounds,
-      radius: 50,
       fields: ["photos", "formatted_address", "name", "rating", "geometry"],
     };
+
     let markers = [];
+
+    function inBoundingBox(obj) {
+      let isLatInRange =
+        obj.lat >= defaultBounds.south && obj.lat <= defaultBounds.north;
+      let isLongInRange =
+        obj.lng <= defaultBounds.east && obj.lng >= defaultBounds.west;
+
+      return isLongInRange && isLatInRange;
+    }
 
     placesService.textSearch(request, function (results, status) {
       for (var i = 0; i < results.length; i++) {
-        if (results[i].formatted_address.indexOf(shortAddress) !== -1) {
+        let tempLatLng = getLatLng(results[i]);
+        if (inBoundingBox(tempLatLng)) {
           markers.push(results[i]);
         }
       }
-
+      console.log(markers);
+      console.log(status);
       submitStores(markers);
-      getStoreAverages(markers);
+      getSpecificOrNonSpecificHandler(markers);
+      //getStoreAverages(markers);
     });
   };
 
@@ -216,16 +340,27 @@ const GetStores = ({
   );
 };
 
-function Map({ center, shortAddress, userName, questions }) {
+function Map({
+  center,
+  shortAddress,
+  userName,
+  questions,
+  mall_id,
+  setMallSpecific,
+  mallSpecific,
+}) {
   const mapRef = useRef();
   const [markers, setMarkers] = useState("");
   const [store, setStore] = useState("");
   const [reviewModalShow, setReviewModalShow] = useState(false);
   const [reviews, setReviews] = useState("");
-  const [storeDetails, setStoreDetails] = useState("");
+  const [storedetails, setStoreDetails] = useState("");
   const [storeInfo, setStoreInfo] = useState("");
   const [sortID, setSortID] = useState("");
-  //const [questions, setQuestions] = useState("");
+  const [map, setMap] = useState(null);
+  const [defaultBounds, setDefaultBounds] = useState("");
+
+  const onLoad = useCallback((map) => setMap(map), []);
 
   const storeSort = (question_id) => {
     var answerType;
@@ -236,8 +371,6 @@ function Map({ center, shortAddress, userName, questions }) {
       answerType = "boolean";
     }
     let preSorted = markers;
-
-    console.log("Before sort ^^ \n\n\n");
 
     if (answerType === "boolean") {
       preSorted.sort((a, b) => {
@@ -256,22 +389,17 @@ function Map({ center, shortAddress, userName, questions }) {
     }
 
     handleSortMarkers(preSorted);
-    console.log(markers[0].name);
 
     setSortID(question_id);
-    console.log(questions[sortID]);
   };
 
   const handleSortMarkers = (newMarkers) => {
-    console.log("Handling it, should be the");
     setMarkers(newMarkers);
   };
 
   const getReviews = (store) => {
-    console.log('getReviews');
     Axios.post("http://localhost:3001/api/getreviews", { store }).then(
       (response) => {
-        console.log(markers);
         let storeName = store;
         setReviews(response.data);
         setReviewModalShow(true);
@@ -292,12 +420,52 @@ function Map({ center, shortAddress, userName, questions }) {
     );
   };
 
+  const mallSpecificHandler = () => {
+    console.log("in the handler");
+
+    if (mallSpecific) {
+      setMallSpecific(false);
+    } else {
+      setMallSpecific(true);
+    }
+    console.log(mallSpecific);
+  };
+
+  /*
+Handles getting specific reviews
+  */
+  const getReviewsMallSpecific = (store) => {
+    Axios.post("http://localhost:3001/api/getreviewsmallspecific", {
+      store,
+      mall_id,
+    }).then((response) => {
+      let storeName = store;
+      setReviews(response.data);
+      setReviewModalShow(true);
+
+      var tempDetails = {};
+
+      for (var i = 0; i < markers.length; i++) {
+        if (markers[i].name === storeName) {
+          tempDetails = {
+            rating: markers[i].averagesInfo.rating,
+            answers: markers[i].averagesInfo.answers,
+          };
+          break;
+        }
+      }
+      setStoreDetails(tempDetails);
+    });
+  };
+
+  /*
   const defaultBounds = {
     north: center.lat + 0.1,
     south: center.lat - 0.1,
     east: center.lng + 0.1,
     west: center.lng - 0.1,
   };
+  */
 
   const styles = [
     {
@@ -332,6 +500,18 @@ function Map({ center, shortAddress, userName, questions }) {
     }),
     []
   );
+  const getBounds = () => {
+    if (map) {
+      let ne = map.getBounds().getNorthEast();
+      let sw = map.getBounds().getSouthWest();
+      setDefaultBounds({
+        north: ne.lat(),
+        south: sw.lat(),
+        east: ne.lng(),
+        west: sw.lng(),
+      });
+    }
+  };
 
   return (
     <div>
@@ -343,14 +523,18 @@ function Map({ center, shortAddress, userName, questions }) {
           setStoreInfo={setStoreInfo}
           shortAddress={shortAddress}
           questions={questions}
+          mall_id={mall_id}
         />
       </div>
+
       <GoogleMap
         zoom={16}
         id="map"
         center={center}
         mapContainerClassName="map-container"
         options={options}
+        onLoad={onLoad}
+        onIdle={getBounds}
         styles={styles}>
         {!markers && <Marker position={center} />}
         {markers &&
@@ -378,6 +562,21 @@ function Map({ center, shortAddress, userName, questions }) {
             </DropdownButton>
           </div>
           <div className="col">{sortID && questions[sortID - 1].question}</div>
+          <div className="col">
+            <div className="custom-control custom-switch">
+              <input
+                type="checkbox"
+                className="custom-control-input"
+                id="customSwitch1"
+                onClick={() => {
+                  mallSpecificHandler();
+                }}
+              />
+              <label className="custom-control-label" htmlFor="customSwitch1">
+                Mall specific?
+              </label>
+            </div>
+          </div>
         </div>
         {markers &&
           markers.map((store) => (
@@ -423,7 +622,14 @@ function Map({ center, shortAddress, userName, questions }) {
                 <Button
                   variant="primary"
                   onClick={() => {
-                    getReviews(store.name);
+                    if (mallSpecific) {
+                      console.log("specific");
+                      getReviewsMallSpecific(store.name);
+                    } else {
+                      console.log("non specific");
+                      getReviews(store.name);
+                    }
+
                     setStore(store.name);
                   }}>
                   Reviews
@@ -438,8 +644,9 @@ function Map({ center, shortAddress, userName, questions }) {
         store={store}
         reviews={reviews}
         username={userName}
-        storeDetails={storeDetails}
+        storedetails={storedetails}
         questions={questions}
+        mall_id={mall_id}
       />
       <div id="idk"></div>
     </div>
@@ -450,8 +657,9 @@ function ModalsHandler(props) {
   const storeName = props.store;
   const reviews = props.reviews;
   const username = props.username;
-  const storeDetails = props.storeDetails;
+  const storedetails = props.storedetails;
   const questions = props.questions;
+  const mall_id = props.mall_id;
   const [rating, setRating] = useState("");
   const [review, setReview] = useState("");
   const [modal, setModal] = useState("");
@@ -486,6 +694,7 @@ function ModalsHandler(props) {
       review: review,
       store: storeName,
       userName: username,
+      mall_id: mall_id,
     })
       .then((response) => {
         let id = response.data.insertId;
@@ -500,14 +709,16 @@ function ModalsHandler(props) {
   };
 
   const submitanswers = (id) => {
-    console.log("Should be going");
-    console.log(id);
     console.log(answerArray);
 
-    Axios.post("http://localhost:3001/api/submitanswers", {
-      review_id: id,
-      answers: answerArray,
-    });
+    if (answerArray.length !== 0) {
+      Axios.post("http://localhost:3001/api/submitanswers", {
+        review_id: id,
+        answers: answerArray,
+      });
+    } else {
+      window.alert("Answers array is empty");
+    }
   };
 
   const closeMakeReview = () => {
@@ -521,24 +732,28 @@ function ModalsHandler(props) {
       setBlankAnswers();
     }
 
-    const newState = answerArray.map((tempAnswer) => {
-      if (tempAnswer.question_id === question_id) {
-        return { ...tempAnswer, answer: answer };
-      }
-      return tempAnswer;
-    });
-    //setAnswerArray(newState);
-    answerArray = newState;
     console.log(answerArray);
+
+    if (answerArray.length !== 0) {
+      const newState = answerArray.map((tempAnswer) => {
+        if (tempAnswer.question_id === question_id) {
+          return { ...tempAnswer, answer: answer };
+        }
+        return tempAnswer;
+      });
+
+      answerArray = newState;
+      console.log(answerArray);
+    }
   };
 
-   const bothZero = (a, b) => {
-     if (a === 0 && b === 0) {
-       return true;
-     } else {
-       return false;
-     }
-   };
+  const bothZero = (a, b) => {
+    if (a === 0 && b === 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   useEffect(() => {
     setModal("reviews");
@@ -551,7 +766,7 @@ function ModalsHandler(props) {
   const makeReviewModal = (props) => {
     return (
       <Modal
-      {...props}
+        {...props}
         size="lg"
         aria-labelledby="contained-modal-title-vcenter"
         centered>
@@ -704,15 +919,15 @@ function ModalsHandler(props) {
                 {props.store}
               </Modal.Title>
             </div>
-            {storeDetails.rating && (
+            {storedetails.rating && (
               <div className="row">
                 <div className="col">Overall: </div>
-                <div className="col">{storeDetails.rating}</div>
+                <div className="col">{storedetails.rating}</div>
               </div>
             )}
 
-            {storeDetails &&
-              storeDetails.answers.map((detail) => (
+            {storedetails &&
+              storedetails.answers.map((detail) => (
                 <div className="row border-top" key={detail.question_id - 1}>
                   <div className="col">
                     {questions[detail.question_id - 1].question}
@@ -774,13 +989,10 @@ function ModalsHandler(props) {
 
   switch (modal) {
     case "reviews":
-        console.log("show reviews modal");
       return reviewsModal(props);
     case "createReview":
-        console.log("show createReview modal");
       return makeReviewModal(props);
     default:
-        console.log("show reviews modal");
       return reviewsModal(props);
   }
 }

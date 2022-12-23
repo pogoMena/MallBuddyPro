@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Axios from "axios";
-import { GoogleMap, useLoadScript, Marker} from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -15,33 +15,16 @@ import {
 import "@reach/combobox/styles.css";
 import { Navigate, useNavigate } from "react-router-dom";
 
-
-
-
-
-
-
-
 //export default function MallSearch(props) {
-export default function MallSearch({loginStatusSent, username, setSelection}) {
+export default function MallSearch({
+  loginStatusSent,
+  username,
+  setSelection,
+}) {
   const loginStatus = loginStatusSent;
 
   const [currentPosition, setCurrentPosition] = useState("");
   const [locationPermissionGiven, setLocationPermissionGiven] = useState("");
-
-  //We will see if this works
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-
-  
 
   //either sets position to current position, or sets it to a random default and
   useEffect(() => {
@@ -81,9 +64,8 @@ export default function MallSearch({loginStatusSent, username, setSelection}) {
     // waits for location and checks if location permission was given
     return <div>Waiting for location</div>;
   }
-  return <Map center={currentPosition} setMallSelection={setSelection}  />;
+  return <Map center={currentPosition} setMallSelection={setSelection} />;
 }
-
 
 //Gets the closest malls if location is given
 //gets malls closest to previous mall if no location was given but user logged in and has used it before
@@ -120,12 +102,33 @@ const PlacesAutocomplete = ({
   const handleSelect = async (address) => {
     setValue(address, false);
     clearSuggestions();
-    const results = await getGeocode({ address });
+    var results = await getGeocode({ address });
+
+    results[0].mall_name = address;
+
+//
+    //Work in progress
+
 
     
-    setMallFinalSelection(results);
-    navigate("/itemSearch");
+    let shortAddress =
+      results[0].address_components[0].long_name +
+      " " +
+      results[0].address_components[1].short_name;
 
+    const { lat, lng } = await getLatLng(results[0]);
+
+    let parsedResults = {
+      mall_name: address,
+      lat: lat,
+      lng: lng,
+      short_address: shortAddress
+    };
+    setMallFinalSelection(parsedResults);
+//
+
+    //
+    navigate("/itemSearch");
   };
 
   return (
@@ -149,15 +152,18 @@ const PlacesAutocomplete = ({
   );
 };
 
-function Map({ center, setMallSelection}) {
+function Map({ center, setMallSelection }) {
   const centerTaken = {
     lat: center.latitude,
     lng: center.longitude,
   };
-  const options = useMemo(() => ({
-disableDefaultUI: true,
-clickableIcons: false
-  }), []);
+  const options = useMemo(
+    () => ({
+      disableDefaultUI: true,
+      clickableIcons: false,
+    }),
+    []
+  );
 
   //const [selected, setSelected] = useState("");
 
@@ -174,8 +180,7 @@ clickableIcons: false
         zoom={12}
         center={centerTaken}
         mapContainerClassName="map-container"
-        options = {options}>
-      </GoogleMap>
+        options={options}></GoogleMap>
     </div>
   );
 }
