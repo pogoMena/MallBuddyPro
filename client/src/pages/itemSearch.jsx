@@ -301,7 +301,7 @@ function Map({
   };
 
   const handleUserHasReview = (data) => {
-    console.log("handleuserhasreview")
+    console.log("handleuserhasreview");
     console.log(data);
     setUserHasReviewForStore(false);
 
@@ -329,7 +329,6 @@ function Map({
         let storeName = store;
         setReviews(response.data);
         setReviewModalShow(true);
-
 
         handleUserHasReview(response.data);
 
@@ -776,6 +775,7 @@ function ModalsHandler(props) {
         //get averages again
         setModal("reviews");
         getSpecificOrNonSpecificHandler(markers);
+        setBlankAnswers();
         props.onHide();
       });
     setReview("");
@@ -796,7 +796,6 @@ function ModalsHandler(props) {
   };
 
   const submitSubComment = () => {
-
     Axios.post("http://localhost:3001/api/submitsubreview", {
       subcomment: subComment,
       review_id: parentReview.review_id,
@@ -817,7 +816,6 @@ function ModalsHandler(props) {
     } else {
       answerArray = answersConst;
     }
-
 
     if (answerArray.length !== 0) {
       const newState = answerArray.map((tempAnswer) => {
@@ -848,8 +846,6 @@ function ModalsHandler(props) {
   }, []);
 
   const handleUpdateReview = (field, object) => {
-
-    
     //var userUpdateTemp = updatedReview;
     var userUpdateTemp = userstorereview;
     if (field === "rating") {
@@ -857,8 +853,8 @@ function ModalsHandler(props) {
     } else if (field === "review") {
       userUpdateTemp.review = object;
     }
-setUserReviewForStore(userUpdateTemp);
-console.log(userstorereview);
+    setUserReviewForStore(userUpdateTemp);
+    console.log(userstorereview);
     //setUpdatedReview(userUpdateTemp);
   };
 
@@ -1079,8 +1075,6 @@ console.log(userstorereview);
     );
   };
 
-
-
   const updateReview = (answers) => {
     var updatedAnswers = [];
     answers.forEach((answer) => {
@@ -1102,24 +1096,14 @@ console.log(userstorereview);
 
     setModal("reviews");
     getSpecificOrNonSpecificHandler(markers);
+    setBlankAnswers();
     props.onHide();
-
   };
-
 
   const deleteReview = () => {};
 
-
-
-
-
-
-
-
-
   const UpdateReviewModal = (props) => {
-
-     console.log(userstorereview);
+    console.log(userstorereview);
 
     var currentAnswers = [];
 
@@ -1172,15 +1156,14 @@ console.log(userstorereview);
                 });
 
                 if (userstorereview.answers) {
-                    console.log('Its got at least 1');
+                  console.log("Its got at least 1");
                   for (var i = 0; i < userstorereview.answers.length; i++) {
-                    
                     if (
                       userstorereview.answers[i].question_id ===
                         question.question_id &&
                       question.answer_type === 1
                     ) {
-                        console.log("in radio");
+                      console.log("in radio");
                       answer = userstorereview.answers[i].radio_answer;
                       currentAnswers[index].answer = answer;
                       console.log(currentAnswers[index].answer);
@@ -1190,7 +1173,7 @@ console.log(userstorereview);
                         question.question_id &&
                       question.answer_type === 2
                     ) {
-                        console.log("in boolean");
+                      console.log("in boolean");
                       answer = userstorereview.answers[i].boolean_answer;
                       currentAnswers[index].answer = answer;
                       console.log(currentAnswers[index].answer);
