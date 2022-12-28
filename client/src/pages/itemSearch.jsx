@@ -29,6 +29,7 @@ import "@reach/combobox/styles.css";
 import "@reach/combobox/styles.css";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useCallback } from "react";
+import axios from "axios";
 
 export default function ItemSearch({ loginStatus, userName, selection }) {
   const [center, setCenter] = useState("");
@@ -117,6 +118,8 @@ const GetStores = ({
   questions,
   mallSpecific,
   mall_id,
+  userName,
+  getSpecificOrNonSpecificHandler,
 }) => {
   const {
     ready,
@@ -138,149 +141,6 @@ const GetStores = ({
     console.log("in insert stores");
     Axios.post("http://localhost:3001/api/insertstores", {
       stores,
-    });
-  };
-
-  const getSpecificOrNonSpecificHandler = (stores) => {
-    if (mallSpecific) {
-      getStoreAveragesMallSpecific(stores);
-    } else {
-      getStoreAverages(stores);
-    }
-  };
-
-  const getStoreAverages = (stores) => {
-    console.log("in storeAverages");
-    Axios.post("http://localhost:3001/api/getavganswer", {
-      stores,
-    }).then((thisresponse) => {
-      console.log("just got the response");
-
-      setStoreInfo(JSON.parse(JSON.stringify(thisresponse.data.store_info)));
-      console.log(JSON.stringify(thisresponse.data.store_info));
-
-      let modifiedStores = stores;
-      let baseAverages = thisresponse.data.store_info;
-
-      //Sets an array of all questions with "0" as the base answer
-      var initialAnswers = [];
-
-      for (let inc = 0; inc < questions.length; inc++) {
-        let emptyAnswerForInitialCreation = {
-          question_id: questions[inc].question_id,
-          radio_answer: 0,
-          boolean_answer: 0,
-        };
-        initialAnswers.push(emptyAnswerForInitialCreation);
-      }
-
-      //Takes the base store from google and adds the averages to it
-      modifiedStores.forEach(function (store, index) {
-        for (var i = 0; i < baseAverages.length; i++) {
-          //If this is the right store, adds info to it
-          if (baseAverages[i].store_name === store.name) {
-            //Goes through each answer for each store and sets it to the correct value
-            //The ultimate goal of this it make sure all stores have an equal number of answers (zero if null)
-            let tempAnswers = JSON.parse(JSON.stringify(initialAnswers)); //Sets all answers to 0 initially
-            baseAverages[i].answers.forEach((average, indexB) => {
-              if (average.question_id !== null) {
-                for (var j = 0; j < questions.length; j++) {
-                  if (tempAnswers[j].question_id === average.question_id) {
-                    tempAnswers[j].radio_answer = average.radio_answer;
-                    tempAnswers[j].boolean_answer = average.boolean_answer;
-                    break;
-                  }
-                }
-              }
-            });
-
-            baseAverages[i].answers = tempAnswers;
-
-            let tempStore = Object.assign({}, store, {
-              averagesInfo: baseAverages[i],
-            });
-            console.log("temp storeVV");
-            console.log(tempStore.name);
-            console.log(tempStore.averagesInfo.answers);
-
-            modifiedStores[index] = tempStore;
-
-            break;
-          }
-        }
-      });
-      //When done, sets the markers to the modiefied stores
-      console.log("its at modified");
-      console.log(modifiedStores);
-      setMarkers(modifiedStores);
-    });
-  };
-
-  const getStoreAveragesMallSpecific = (stores) => {
-    console.log("in storeAveragesSpecific");
-    Axios.post("http://localhost:3001/api/getavganswermallspecific", {
-      stores,
-      mall_id,
-    }).then((thisresponse) => {
-      console.log("just got the response");
-
-      setStoreInfo(JSON.parse(JSON.stringify(thisresponse.data.store_info)));
-      console.log(JSON.stringify(thisresponse.data.store_info));
-
-      let modifiedStores = stores;
-      let baseAverages = thisresponse.data.store_info;
-
-      //Sets an array of all questions with "0" as the base answer
-      var initialAnswers = [];
-
-      for (let inc = 0; inc < questions.length; inc++) {
-        let emptyAnswerForInitialCreation = {
-          question_id: questions[inc].question_id,
-          radio_answer: 0,
-          boolean_answer: 0,
-        };
-        initialAnswers.push(emptyAnswerForInitialCreation);
-      }
-
-      //Takes the base store from google and adds the averages to it
-      modifiedStores.forEach(function (store, index) {
-        for (var i = 0; i < baseAverages.length; i++) {
-          //If this is the right store, adds info to it
-          if (baseAverages[i].store_name === store.name) {
-            //Goes through each answer for each store and sets it to the correct value
-            //The ultimate goal of this it make sure all stores have an equal number of answers (zero if null)
-            let tempAnswers = JSON.parse(JSON.stringify(initialAnswers)); //Sets all answers to 0 initially
-            baseAverages[i].answers.forEach((average, indexB) => {
-              if (average.question_id !== null) {
-                for (var j = 0; j < questions.length; j++) {
-                  if (tempAnswers[j].question_id === average.question_id) {
-                    tempAnswers[j].radio_answer = average.radio_answer;
-                    tempAnswers[j].boolean_answer = average.boolean_answer;
-                    break;
-                  }
-                }
-              }
-            });
-
-            baseAverages[i].answers = tempAnswers;
-
-            let tempStore = Object.assign({}, store, {
-              averagesInfo: baseAverages[i],
-            });
-            console.log("temp storeVV");
-            console.log(tempStore.name);
-            console.log(tempStore.averagesInfo.answers);
-
-            modifiedStores[index] = tempStore;
-
-            break;
-          }
-        }
-      });
-      //When done, sets the markers to the modiefied stores
-      console.log("its at modified");
-      console.log(modifiedStores);
-      setMarkers(modifiedStores);
     });
   };
 
@@ -326,17 +186,44 @@ const GetStores = ({
     });
   };
 
+  const setFavoriteMall = () => {
+    Axios.post("http://localhost:3001/api/setfavoritemall", {
+      mall_id,
+      userName,
+    }).then((response) => {
+      console.log(response);
+      if (response.data.changedRows === 0) {
+        window.alert("This is already your favorite mall");
+      } else {
+        window.alert("New favorite mall set!");
+      }
+    });
+  };
+
   return (
-    <form onSubmit={handleSelect}>
-      <label>
-        <input
-          type="text"
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Item name"
-        />
-      </label>
-      <input type="submit" value="Submit" />
-    </form>
+    <div className="row">
+      <div className="col-10">
+        <form onSubmit={handleSelect} className="my-2">
+          <label>
+            <input
+              type="text"
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Item name"
+            />
+          </label>
+          <input type="submit" value="Submit" />
+        </form>
+      </div>
+      <div className="col-2">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setFavoriteMall();
+          }}>
+          Favorite Mall
+        </Button>
+      </div>
+    </div>
   );
 };
 
@@ -359,6 +246,10 @@ function Map({
   const [sortID, setSortID] = useState("");
   const [map, setMap] = useState(null);
   const [defaultBounds, setDefaultBounds] = useState("");
+
+  //for update review
+  const [userHasReviewForStore, setUserHasReviewForStore] = useState("");
+  const [userReviewForStore, setUserReviewForStore] = useState("");
 
   const onLoad = useCallback((map) => setMap(map), []);
 
@@ -397,12 +288,50 @@ function Map({
     setMarkers(newMarkers);
   };
 
+  const getAnswersForUserReview = (review_id, tempreview) => {
+    Axios.post("http://localhost:3001/api/getanswersforreview", {
+      review_id,
+    }).then((response) => {
+      console.log("in get answers for user review");
+      let answers = response.data;
+      let thisReview = tempreview;
+      thisReview.answers = answers;
+      setUserReviewForStore(thisReview);
+    });
+  };
+
+  const handleUserHasReview = (data) => {
+    console.log("handleuserhasreview")
+    console.log(data);
+    setUserHasReviewForStore(false);
+
+    data.forEach((tempreview) => {
+      //console.log(userName);
+      //console.log(review.username);
+      if (tempreview.username === userName) {
+        console.log("Should be true");
+        console.log(tempreview);
+        setUserHasReviewForStore(true);
+        setUserReviewForStore(tempreview);
+
+        //console.log(userReviewForStore);
+        getAnswersForUserReview(tempreview.review_id, tempreview);
+        return true;
+      }
+    });
+
+    return false;
+  };
+
   const getReviews = (store) => {
     Axios.post("http://localhost:3001/api/getreviews", { store }).then(
       (response) => {
         let storeName = store;
         setReviews(response.data);
         setReviewModalShow(true);
+
+
+        handleUserHasReview(response.data);
 
         var tempDetails = {};
 
@@ -428,9 +357,138 @@ function Map({
     } else {
       setMallSpecific(true);
     }
-    console.log(mallSpecific);
+
+    getSpecificOrNonSpecificHandler(markers);
   };
 
+  const getSpecificOrNonSpecificHandler = (stores) => {
+    if (mallSpecific) {
+      getStoreAveragesMallSpecific(stores);
+    } else {
+      getStoreAverages(stores);
+    }
+  };
+
+  const getStoreAverages = (stores) => {
+    console.log("in storeAverages");
+    Axios.post("http://localhost:3001/api/getavganswer", {
+      stores,
+    }).then((thisresponse) => {
+      setStoreInfo(JSON.parse(JSON.stringify(thisresponse.data.store_info)));
+
+      let modifiedStores = stores;
+      let baseAverages = thisresponse.data.store_info;
+
+      //Sets an array of all questions with "0" as the base answer
+      var initialAnswers = [];
+
+      for (let inc = 0; inc < questions.length; inc++) {
+        let emptyAnswerForInitialCreation = {
+          question_id: questions[inc].question_id,
+          radio_answer: 0,
+          boolean_answer: 0,
+        };
+        initialAnswers.push(emptyAnswerForInitialCreation);
+      }
+
+      //Takes the base store from google and adds the averages to it
+      modifiedStores.forEach(function (store, index) {
+        for (var i = 0; i < baseAverages.length; i++) {
+          //If this is the right store, adds info to it
+          if (baseAverages[i].store_name === store.name) {
+            //Goes through each answer for each store and sets it to the correct value
+            //The ultimate goal of this it make sure all stores have an equal number of answers (zero if null)
+            let tempAnswers = JSON.parse(JSON.stringify(initialAnswers)); //Sets all answers to 0 initially
+            baseAverages[i].answers.forEach((average, indexB) => {
+              if (average.question_id !== null) {
+                for (var j = 0; j < questions.length; j++) {
+                  if (tempAnswers[j].question_id === average.question_id) {
+                    tempAnswers[j].radio_answer = average.radio_answer;
+                    tempAnswers[j].boolean_answer = average.boolean_answer;
+                    break;
+                  }
+                }
+              }
+            });
+
+            baseAverages[i].answers = tempAnswers;
+
+            let tempStore = Object.assign({}, store, {
+              averagesInfo: baseAverages[i],
+            });
+
+            modifiedStores[index] = tempStore;
+
+            break;
+          }
+        }
+      });
+      //When done, sets the markers to the modiefied stores
+      setMarkers(modifiedStores);
+    });
+  };
+
+  const getStoreAveragesMallSpecific = (stores) => {
+    console.log("in storeAveragesSpecific");
+    Axios.post("http://localhost:3001/api/getavganswermallspecific", {
+      stores,
+      mall_id,
+    }).then((thisresponse) => {
+      console.log("just got the response");
+
+      setStoreInfo(JSON.parse(JSON.stringify(thisresponse.data.store_info)));
+
+      let modifiedStores = stores;
+      let baseAverages = thisresponse.data.store_info;
+
+      //Sets an array of all questions with "0" as the base answer
+      var initialAnswers = [];
+
+      for (let inc = 0; inc < questions.length; inc++) {
+        let emptyAnswerForInitialCreation = {
+          question_id: questions[inc].question_id,
+          radio_answer: 0,
+          boolean_answer: 0,
+        };
+        initialAnswers.push(emptyAnswerForInitialCreation);
+      }
+
+      //Takes the base store from google and adds the averages to it
+      modifiedStores.forEach(function (store, index) {
+        for (var i = 0; i < baseAverages.length; i++) {
+          //If this is the right store, adds info to it
+          if (baseAverages[i].store_name === store.name) {
+            //Goes through each answer for each store and sets it to the correct value
+            //The ultimate goal of this it make sure all stores have an equal number of answers (zero if null)
+            let tempAnswers = JSON.parse(JSON.stringify(initialAnswers)); //Sets all answers to 0 initially
+            baseAverages[i].answers.forEach((average, indexB) => {
+              if (average.question_id !== null) {
+                for (var j = 0; j < questions.length; j++) {
+                  if (tempAnswers[j].question_id === average.question_id) {
+                    tempAnswers[j].radio_answer = average.radio_answer;
+                    tempAnswers[j].boolean_answer = average.boolean_answer;
+                    break;
+                  }
+                }
+              }
+            });
+
+            baseAverages[i].answers = tempAnswers;
+
+            let tempStore = Object.assign({}, store, {
+              averagesInfo: baseAverages[i],
+            });
+
+            modifiedStores[index] = tempStore;
+
+            break;
+          }
+        }
+      });
+      //When done, sets the markers to the modiefied stores
+      setMarkers(modifiedStores);
+    });
+  };
   /*
 Handles getting specific reviews
   */
@@ -457,15 +515,6 @@ Handles getting specific reviews
       setStoreDetails(tempDetails);
     });
   };
-
-  /*
-  const defaultBounds = {
-    north: center.lat + 0.1,
-    south: center.lat - 0.1,
-    east: center.lng + 0.1,
-    west: center.lng - 0.1,
-  };
-  */
 
   const styles = [
     {
@@ -524,6 +573,8 @@ Handles getting specific reviews
           shortAddress={shortAddress}
           questions={questions}
           mall_id={mall_id}
+          userName={userName}
+          getSpecificOrNonSpecificHandler={getSpecificOrNonSpecificHandler}
         />
       </div>
 
@@ -553,6 +604,7 @@ Handles getting specific reviews
               {questions &&
                 questions.map((question) => (
                   <Dropdown.Item
+                    key={question.question_id}
                     onClick={() => {
                       storeSort(question.question_id);
                     }}>
@@ -623,8 +675,8 @@ Handles getting specific reviews
                   variant="primary"
                   onClick={() => {
                     if (mallSpecific) {
-                      console.log("specific");
                       getReviewsMallSpecific(store.name);
+                      console.log("specific");
                     } else {
                       console.log("non specific");
                       getReviews(store.name);
@@ -647,6 +699,11 @@ Handles getting specific reviews
         storedetails={storedetails}
         questions={questions}
         mall_id={mall_id}
+        getallstores={getSpecificOrNonSpecificHandler}
+        markers={markers}
+        doesuserhavestorereview={userHasReviewForStore}
+        userstorereview={userReviewForStore}
+        setuserstorereview={setUserReviewForStore}
       />
       <div id="idk"></div>
     </div>
@@ -660,17 +717,30 @@ function ModalsHandler(props) {
   const storedetails = props.storedetails;
   const questions = props.questions;
   const mall_id = props.mall_id;
+  const markers = props.markers;
+  const getSpecificOrNonSpecificHandler = props.getallstores;
   const [rating, setRating] = useState("");
   const [review, setReview] = useState("");
   const [modal, setModal] = useState("");
+
+  //For subComments
+  const [parentReview, setParentReview] = useState("");
+  const [subComments, setSubComments] = useState("");
+  const [subComment, setSubComment] = useState("");
+
+  //To handle if a user will have option to update or delete review
+  const doesuserhavestorereview = props.doesuserhavestorereview;
+  const userstorereview = props.userstorereview;
+  const setUserReviewForStore = props.setuserstorereview;
+  const [updatedReview, setUpdatedReview] = useState("");
+  const [updateAnswers, setUpdateAnswers] = useState("");
+
   const [modalObject, setModalObject] = useState("");
-  //const [questions, setQuestions] = useState("");
-  //const [answerArray, setAnswerArray] = useState("");
   const [errors, setErrors] = useState("");
-  var answerArray = [];
+
+  const [answersConst, setAnswersConst] = useState("");
 
   //Gets all questions for createReview page
-
   //Resets all answers to 0
   const setBlankAnswers = () => {
     let tempArray = [];
@@ -682,7 +752,9 @@ function ModalsHandler(props) {
       });
     }
 
-    answerArray = tempArray;
+    //answerArray = tempArray;
+    setAnswersConst(tempArray);
+    return tempArray;
     //setAnswerArray(tempArray);
   };
 
@@ -701,7 +773,9 @@ function ModalsHandler(props) {
         submitanswers(id);
       })
       .then(() => {
+        //get averages again
         setModal("reviews");
+        getSpecificOrNonSpecificHandler(markers);
         props.onHide();
       });
     setReview("");
@@ -709,16 +783,25 @@ function ModalsHandler(props) {
   };
 
   const submitanswers = (id) => {
-    console.log(answerArray);
+    //console.log(answerArray);
 
-    if (answerArray.length !== 0) {
+    if (answersConst.length !== 0) {
       Axios.post("http://localhost:3001/api/submitanswers", {
         review_id: id,
-        answers: answerArray,
+        answers: answersConst,
       });
     } else {
       window.alert("Answers array is empty");
     }
+  };
+
+  const submitSubComment = () => {
+
+    Axios.post("http://localhost:3001/api/submitsubreview", {
+      subcomment: subComment,
+      review_id: parentReview.review_id,
+      username: username,
+    });
   };
 
   const closeMakeReview = () => {
@@ -728,11 +811,13 @@ function ModalsHandler(props) {
 
   //Handles the selection of all items
   const answerSelectHandler = (question_id, answer) => {
-    if (answerArray.length === 0) {
-      setBlankAnswers();
+    let answerArray;
+    if (answersConst.length === 0) {
+      answerArray = setBlankAnswers();
+    } else {
+      answerArray = answersConst;
     }
 
-    console.log(answerArray);
 
     if (answerArray.length !== 0) {
       const newState = answerArray.map((tempAnswer) => {
@@ -743,7 +828,7 @@ function ModalsHandler(props) {
       });
 
       answerArray = newState;
-      console.log(answerArray);
+      setAnswersConst(answerArray);
     }
   };
 
@@ -761,6 +846,97 @@ function ModalsHandler(props) {
     setRating(5);
     setReview("");
   }, []);
+
+  const handleUpdateReview = (field, object) => {
+
+    
+    //var userUpdateTemp = updatedReview;
+    var userUpdateTemp = userstorereview;
+    if (field === "rating") {
+      userUpdateTemp.rating = object;
+    } else if (field === "review") {
+      userUpdateTemp.review = object;
+    }
+setUserReviewForStore(userUpdateTemp);
+console.log(userstorereview);
+    //setUpdatedReview(userUpdateTemp);
+  };
+
+  const getParentReviewSubComments = () => {
+    var review_id = parentReview.review_id;
+    ///api/getreviewsubcomments
+    Axios.post("http://localhost:3001/api/getreviewsubcomments", {
+      review_id,
+    }).then((response) => {
+      setSubComments(response.data);
+    });
+  };
+
+  const SubReviewModal = (props) => {
+    return (
+      <Modal
+        {...props}
+        size="lg"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered>
+        <Modal.Header closeButton>
+          <div className="row w-100">
+            <div className="col-2 h4 text-center">{parentReview.username}:</div>
+            <div className="col-10 h4 text-center">{parentReview.review}</div>
+          </div>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="">
+            <div className="form">
+              <div className="form-group">
+                <label>Response:</label>
+                <textarea
+                  className="form-control"
+                  id="review"
+                  rows="3"
+                  onChange={(e) => {
+                    setSubComment(e.target.value);
+                  }}></textarea>
+              </div>
+            </div>
+            <div className="container">
+              <div className="text-center h4">Comments</div>
+              {subComments &&
+                subComments.map((comment, index) => (
+                  <div className="row" key={index}>
+                    <div className="col-3 text-center h5">
+                      {comment.username}:
+                    </div>
+                    <div className="col-9">{comment.subreview}</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="row">
+          <div className="w-50 p-0 m-0">
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                closeMakeReview();
+              }}>
+              Close
+            </button>
+          </div>
+          <div className="w-50 p-0 m-0">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                submitSubComment();
+                closeMakeReview();
+              }}>
+              Submit
+            </button>
+          </div>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
 
   //The Modal to be used when creating a new review
   const makeReviewModal = (props) => {
@@ -903,6 +1079,252 @@ function ModalsHandler(props) {
     );
   };
 
+
+
+  const updateReview = (answers) => {
+    var updatedAnswers = [];
+    answers.forEach((answer) => {
+      if (answer.answer !== -1) {
+        updatedAnswers.push(answer);
+      }
+    });
+
+    Axios.post("http://localhost:3001/api/updateanswersbyreview", {
+      review_id: userstorereview.review_id,
+      answers: updatedAnswers,
+    });
+
+    Axios.post("http://localhost:3001/api/userupdatereview", {
+      review_id: userstorereview.review_id,
+      rating: userstorereview.rating,
+      review: userstorereview.review,
+    });
+
+    setModal("reviews");
+    getSpecificOrNonSpecificHandler(markers);
+    props.onHide();
+
+  };
+
+
+  const deleteReview = () => {};
+
+
+
+
+
+
+
+
+
+  const UpdateReviewModal = (props) => {
+
+     console.log(userstorereview);
+
+    var currentAnswers = [];
+
+    return (
+      <Modal
+        {...props}
+        size="lg"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered>
+        <Modal.Header closeButton>
+          <Modal.Title id="contained-modal-title-vcenter" className="ms-auto">
+            Update review for: {props.store}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="form">
+            <div className="form-group">
+              <label>Rating</label>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                defaultValue={userstorereview.rating}
+                name="Rating"
+                onChange={(e) => {
+                  handleUpdateReview("rating", e.target.value);
+                  //setRating(e.target.value);
+                }}
+              />
+            </div>
+            <div className="form-group">
+              <label>What do you think?</label>
+              <textarea
+                className="form-control"
+                id="review"
+                rows="3"
+                defaultValue={userstorereview.review}
+                onChange={(e) => {
+                  handleUpdateReview("review", e.target.value);
+                  //setReview(e.target.value);
+                }}></textarea>
+            </div>
+            {questions &&
+              questions.map((question, index) => {
+                var answer = -1;
+                currentAnswers.push({
+                  question_id: question.question_id,
+                  answer_type: question.answer_type,
+                  answer: answer,
+                });
+
+                if (userstorereview.answers) {
+                    console.log('Its got at least 1');
+                  for (var i = 0; i < userstorereview.answers.length; i++) {
+                    
+                    if (
+                      userstorereview.answers[i].question_id ===
+                        question.question_id &&
+                      question.answer_type === 1
+                    ) {
+                        console.log("in radio");
+                      answer = userstorereview.answers[i].radio_answer;
+                      currentAnswers[index].answer = answer;
+                      console.log(currentAnswers[index].answer);
+                      break;
+                    } else if (
+                      userstorereview.answers[i].question_id ===
+                        question.question_id &&
+                      question.answer_type === 2
+                    ) {
+                        console.log("in boolean");
+                      answer = userstorereview.answers[i].boolean_answer;
+                      currentAnswers[index].answer = answer;
+                      console.log(currentAnswers[index].answer);
+                      break;
+                    }
+                  }
+                } else {
+                  console.log("its null");
+                }
+
+                if (question.answer_type === 1 && question.display) {
+                  return (
+                    <div
+                      className="form-group row radio"
+                      key={question.question_id}>
+                      <div className="col">
+                        <label>{question.question}</label>
+                      </div>
+                      <div className="col">
+                        <input
+                          type="radio"
+                          value="1"
+                          defaultChecked={currentAnswers[index].answer === 1}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                        <input
+                          type="radio"
+                          value="2"
+                          defaultChecked={currentAnswers[index].answer === 2}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                        <input
+                          type="radio"
+                          value="3"
+                          defaultChecked={currentAnswers[index].answer === 3}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                        <input
+                          type="radio"
+                          value="4"
+                          defaultChecked={currentAnswers[index].answer === 4}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                        <input
+                          type="radio"
+                          value="5"
+                          defaultChecked={currentAnswers[index].answer === 5}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                      </div>
+                    </div>
+                  );
+                } else if (question.answer_type === 2 && question.display) {
+                  return (
+                    <div
+                      className="form-group row radio"
+                      key={question.question_id}>
+                      <div className="col">
+                        <label>{question.question}</label>
+                      </div>
+                      <div className="col">
+                        <input
+                          type="radio"
+                          value="0"
+                          defaultChecked={currentAnswers[index].answer === 0}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                        <input
+                          type="radio"
+                          value="1"
+                          defaultChecked={currentAnswers[index].answer === 1}
+                          onChange={(e) => {
+                            currentAnswers[index].answer = e.target.value;
+                          }}
+                          name={question.question_id}
+                        />
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return <div></div>;
+                }
+              })}
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="row">
+          <div className="w-25 p-0 m-0">
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                closeMakeReview();
+              }}>
+              Close
+            </button>
+          </div>
+          <div className="w-75 p-0 m-0">
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                deleteReview();
+              }}>
+              Delete
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                updateReview(currentAnswers);
+              }}>
+              Update
+            </button>
+          </div>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
   const reviewsModal = (props) => {
     return (
       <Modal
@@ -952,7 +1374,7 @@ function ModalsHandler(props) {
           </div>
         </Modal.Header>
         <Modal.Body>
-          {username && (
+          {username && doesuserhavestorereview === false && (
             <div className="row">
               <Button
                 variant="primary"
@@ -960,6 +1382,17 @@ function ModalsHandler(props) {
                   setModal("createReview");
                 }}>
                 Leave Review
+              </Button>
+            </div>
+          )}
+          {username && doesuserhavestorereview === true && (
+            <div className="row">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setModal("updateReview");
+                }}>
+                Update Review
               </Button>
             </div>
           )}
@@ -973,7 +1406,13 @@ function ModalsHandler(props) {
                 <div className="col">{review.review}</div>
                 <div className="col">{review.rating}</div>
                 <div className="col">
-                  <button className="btn btn-secondary" onClick={props.onHide}>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setParentReview(review);
+                      getParentReviewSubComments();
+                      setModal("createSubReview");
+                    }}>
                     comments
                   </button>
                 </div>
@@ -992,6 +1431,10 @@ function ModalsHandler(props) {
       return reviewsModal(props);
     case "createReview":
       return makeReviewModal(props);
+    case "updateReview":
+      return UpdateReviewModal(props);
+    case "createSubReview":
+      return SubReviewModal(props);
     default:
       return reviewsModal(props);
   }

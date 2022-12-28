@@ -14,20 +14,23 @@ import {
 } from "@reach/combobox";
 import "@reach/combobox/styles.css";
 import { Navigate, useNavigate } from "react-router-dom";
+import Button from "react-bootstrap/Button";
 
 //export default function MallSearch(props) {
 export default function MallSearch({
   loginStatusSent,
-  username,
+  userName,
   setSelection,
 }) {
-  const loginStatus = loginStatusSent;
-
+  //const loginStatus = loginStatusSent;
+  //const currentUser = username;
   const [currentPosition, setCurrentPosition] = useState("");
   const [locationPermissionGiven, setLocationPermissionGiven] = useState("");
 
   //either sets position to current position, or sets it to a random default and
   useEffect(() => {
+    console.log(loginStatusSent);
+    console.log(userName);
     if (navigator.geolocation) {
       //Checks if browser supports location
       navigator.geolocation.getCurrentPosition(
@@ -64,7 +67,7 @@ export default function MallSearch({
     // waits for location and checks if location permission was given
     return <div>Waiting for location</div>;
   }
-  return <Map center={currentPosition} setMallSelection={setSelection} />;
+  return <Map center={currentPosition} setMallSelection={setSelection} userName={userName} />;
 }
 
 //Gets the closest malls if location is given
@@ -72,6 +75,7 @@ export default function MallSearch({
 //if neither of the others, shows whole world and lets user type in mall names i guess
 const PlacesAutocomplete = ({
   //setSelected,
+  userName,
   defaultCenter,
   setMallFinalSelection,
 }) => {
@@ -124,6 +128,8 @@ const PlacesAutocomplete = ({
       lng: lng,
       short_address: shortAddress
     };
+
+    console.log(parsedResults);
     setMallFinalSelection(parsedResults);
 //
 
@@ -131,28 +137,67 @@ const PlacesAutocomplete = ({
     navigate("/itemSearch");
   };
 
+  const goToFavoriteMall = () => {
+
+    console.log(userName);
+    console.log("\n\nGetFavoriteMallInfo");
+    Axios.post("http://localhost:3001/api/getusersfavoritemall", {
+      userName,
+    }).then((response)=>{
+        console.log(response.data[0])
+        let parsedResults = {
+          mall_name: response.data[0].mall_name,
+          lat: response.data[0].mall_lat,
+          lng: response.data[0].mall_lng,
+          short_address: response.data[0].mall_address,
+        };
+
+        console.log(parsedResults);
+        setMallFinalSelection(parsedResults);
+        //
+
+        //
+        navigate("/itemSearch");
+    });
+  }
+
   return (
-    <Combobox onSelect={handleSelect}>
-      <ComboboxInput
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        disabled={!ready}
-        className="combobox-input"
-        placeholder="Search for a mall"
-      />
-      <ComboboxPopover className="combobox-popover">
-        <ComboboxList>
-          {status === "OK" &&
-            data.map(({ place_id, description }) => (
-              <ComboboxOption key={place_id} value={description} />
-            ))}
-        </ComboboxList>
-      </ComboboxPopover>
-    </Combobox>
+    <div className="row">
+      <div className="col-10">
+        <Combobox onSelect={handleSelect}>
+          <ComboboxInput
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            disabled={!ready}
+            className="combobox-input"
+            placeholder="Search for a mall"
+          />
+          <ComboboxPopover className="combobox-popover">
+            <ComboboxList>
+              {status === "OK" &&
+                data.map(({ place_id, description }) => (
+                  <ComboboxOption key={place_id} value={description} />
+                ))}
+            </ComboboxList>
+          </ComboboxPopover>
+        </Combobox>
+      </div>
+      <div className="col-2">
+        {true && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              goToFavoriteMall();
+            }}>
+            Go to favorite
+          </Button>
+        )}
+      </div>
+    </div>
   );
 };
 
-function Map({ center, setMallSelection }) {
+function Map({ center, setMallSelection,userName }) {
   const centerTaken = {
     lat: center.latitude,
     lng: center.longitude,
@@ -169,12 +214,14 @@ function Map({ center, setMallSelection }) {
 
   return (
     <div>
-      <div className="places-container">
+      <div className="places-container row">
         <PlacesAutocomplete
           //setSelected={setSelected}
           defaultCenter={centerTaken}
           setMallFinalSelection={setMallSelection}
+          userName={userName}
         />
+        
       </div>
       <GoogleMap
         zoom={12}
