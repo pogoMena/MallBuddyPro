@@ -6,12 +6,6 @@ import Button from "react-bootstrap/Button";
 export default function Admin(props) {
   const admin = props.admin;
 
-  const updateUser = (id) => {
-    Axios.post("http://localhost:3001/api/update", {
-      id: id,
-    });
-  };
-
   if (props.loginStatus === true) {
     if (admin) {
       return <Display />;
@@ -39,6 +33,7 @@ function AdminDisplayHandler() {
   const [answers, setAnswers] = useState("");
   const [reviews, setReviews] = useState("");
   const [ascending, setAscending] = useState("");
+  const [subComments, setSubComments] = useState("");
   const [showAddQuestion, setShowAddQuestion] = useState("");
   const [modal, setModal] = useState("");
   const [show, setShow] = useState(false);
@@ -72,6 +67,16 @@ function AdminDisplayHandler() {
   const [globalRadioAnswer, setGlobalRadioAnswer] = useState("");
   const [globalBooleanAnswer, setGlobalBooleanAnswer] = useState("");
 
+  //For updating subreviews
+  const [globalSubReviewID, setGlobalSubReviewID] = useState("");
+  const [globalSubReview, setGlobalSubReview] = useState("");
+
+  //For updating users
+  const [globalAdmin, setGlobalAdmin] = useState("");
+  const [globalUserName, setGlobalUserName] = useState("");
+  const [globalPassword, setGlobalPassword] = useState("");
+  const [globalEmail, setGlobalEmail] = useState("");
+
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
@@ -88,6 +93,7 @@ function AdminDisplayHandler() {
           <button
             className="m-auto"
             onClick={() => {
+              getUsers();
               setDisplay("users");
             }}>
             Users
@@ -143,16 +149,27 @@ function AdminDisplayHandler() {
             Answers
           </button>
         </div>
+        <div className="row mt-1">
+          <button
+            className="m-auto"
+            onClick={() => {
+              getSubReviews();
+              setDisplay("subcomments");
+            }}>
+            SubComments
+          </button>
+        </div>
       </div>
     );
   };
 
-  const UsersDisplay = (props) => {
-
+  const UsersDisplay = () => {
     const deleteUser = (id) => {
       Axios.post("http://localhost:3001/api/deleteuser", {
         user_id: id,
-      });
+      }).then(()=>{
+        getUsers()
+    });
     };
 
     const userSort = (sortBy) => {
@@ -183,54 +200,70 @@ function AdminDisplayHandler() {
       setAscending(!ascending);
     };
 
+
     return (
       <div className="col-10 p-5 m-auto">
+        <div className="row mx-auto">
+          <button
+            onClick={() => {
+              setModal("addUser");
+              handleShow();
+            }}>
+            Add User
+          </button>
+        </div>
         <div className="container border">
           <div className="row">
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6 "
               onClick={() => {
                 userSort("user_id");
               }}>
               Id
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 userSort("username");
               }}>
               Username
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 userSort("password");
               }}>
               Password
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 userSort("email");
               }}>
               Email
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 userSort("mall_id");
               }}>
               Favorite Mall
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 userSort("admin");
               }}>
               Admin
             </div>
-            <div className="col h4">Update</div>
-            <div className="col h4">Delete</div>
+            <div className="col h6">Update</div>
+            <div className="col h6">Delete</div>
           </div>
 
           <div>
@@ -244,11 +277,30 @@ function AdminDisplayHandler() {
                     <div className="col text-truncate">{val.email}</div>
                     <div className="col text-truncate">{val.mall_id}</div>
                     <div className="col text-truncate">{val.admin}</div>
-                    <div className="col text-truncate">update</div>
-                    <div className="col text-truncate" onClick={()=>{
+                    <div
+                      id="interactable"
+                      className="col text-truncate"
+                      onClick={() => {
+                        setGlobalUserID(val.user_id);
+                        setGlobalMallID(val.mall_id);
+                        setGlobalAdmin(val.admin);
+                        setGlobalUserName(val.username);
+                        setGlobalPassword(val.password);
+                        setGlobalEmail(val.email);
+                        setModal("updateUser");
+                        handleShow();
+                      }}>
+                      update
+                    </div>
+                    <div
+                      id="interactable"
+                      className="col text-truncate"
+                      onClick={() => {
                         deleteUser(val.user_id);
-                        getUsers();
-                    }}>delete</div>
+                        
+                      }}>
+                      delete
+                    </div>
                   </div>
                 );
               })}
@@ -258,10 +310,11 @@ function AdminDisplayHandler() {
     );
   };
   const QuestionsDisplay = () => {
-
     const deleteQuestion = (id) => {
       Axios.post("http://localhost:3001/api/deletequestion", {
         question_id: id,
+      }).then(() => {
+        getQuestions();
       });
     };
     const questionsSort = (sortBy) => {
@@ -312,35 +365,39 @@ function AdminDisplayHandler() {
           </div>
           <div className="row">
             <div
-              className="col h4"
+              id="interactable"
+              className="col-2 h6"
               onClick={() => {
                 questionsSort("question_id");
               }}>
               Question ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 questionsSort("question");
               }}>
               Question
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col-1 h6"
               onClick={() => {
                 questionsSort("answer_type");
               }}>
               Answer Type
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col-1 h6"
               onClick={() => {
                 questionsSort("display");
               }}>
               Display
             </div>
-            <div className="col h4">Update</div>
-            <div className="col h4">Delete</div>
+            <div className="col-1 h6">Update</div>
+            <div className="col-1 h6">Delete</div>
           </div>
 
           <div>
@@ -348,17 +405,18 @@ function AdminDisplayHandler() {
               questions.map((question) => {
                 return (
                   <div className="row" key={question.question_id}>
-                    <div className="col">{question.question_id}</div>
+                    <div className="col-2">{question.question_id}</div>
                     <div className="col text-truncate">{question.question}</div>
-                    <div className="col text-truncate">
+                    <div className="col-1 text-truncate">
                       {question.answer_type}
                     </div>
-                    <div className="col text-truncate">
+                    <div className="col-1 text-truncate">
                       {question.display === 1 && "True"}
                       {question.display === 0 && "False"}
                     </div>
                     <div
-                      className="col"
+                      id="interactable"
+                      className="col-1"
                       onClick={() => {
                         setModal("updateQuestion");
                         setGlobalQuestionID(question.question_id);
@@ -369,10 +427,15 @@ function AdminDisplayHandler() {
                       }}>
                       update
                     </div>
-                    <div className="col" onClick={()=> {
+                    <div
+                      id="interactable"
+                      className="col-1"
+                      onClick={() => {
                         deleteQuestion(question.question_id);
                         getQuestions();
-                    }}>delete</div>
+                      }}>
+                      delete
+                    </div>
                   </div>
                 );
               })}
@@ -382,11 +445,14 @@ function AdminDisplayHandler() {
     );
   };
   const MallsDisplay = () => {
-const deleteMall = (id) => {
-  Axios.post("http://localhost:3001/api/deletemall", {
-    mall_id: id,
-  });
-};
+    const deleteMall = (id) => {
+      Axios.post("http://localhost:3001/api/deletemall", {
+        mall_id: id,
+      }).then(()=>{
+        getMalls();
+      });
+
+    };
 
     const mallsSort = (sortBy) => {
       let temp = malls;
@@ -423,45 +489,59 @@ const deleteMall = (id) => {
 
     return (
       <div className="col-10 p-5 m-auto">
+        <div className="row mx-auto">
+          <button
+            onClick={() => {
+              setModal("addMall");
+              handleShow();
+            }}>
+            Add Mall
+          </button>
+        </div>
         <div className="container border">
           <div className="row">
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 mallsSort("mall_id");
               }}>
               Mall ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 mallsSort("mall_name");
               }}>
               Mall Name
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 mallsSort("mall_address");
               }}>
               Address
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 mallsSort("mall_lat");
               }}>
               Lat
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 mallsSort("mall_lng");
               }}>
               Lng
             </div>
-            <div className="col h4">Update</div>
-            <div className="col h4">Delete</div>
+            <div className="col h6">Update</div>
+            <div className="col h6">Delete</div>
           </div>
 
           <div>
@@ -475,6 +555,7 @@ const deleteMall = (id) => {
                     <div className="col text-truncate">{mall.mall_lat}</div>
                     <div className="col text-truncate">{mall.mall_lng}</div>
                     <div
+                      id="interactable"
                       className="col"
                       onClick={() => {
                         setModal("updateMall");
@@ -487,10 +568,15 @@ const deleteMall = (id) => {
                       }}>
                       update
                     </div>
-                    <div className="col" onClick={()=> {
+                    <div
+                      id="interactable"
+                      className="col"
+                      onClick={() => {
                         deleteMall(mall.mall_id);
                         getMalls();
-                    }}>delete</div>
+                      }}>
+                      delete
+                    </div>
                   </div>
                 );
               })}
@@ -502,10 +588,11 @@ const deleteMall = (id) => {
 
   //
   const StoresDisplay = () => {
-
     const deleteStore = (id) => {
       Axios.post("http://localhost:3001/api/deletestore", {
         store_id: id,
+      }).then(() => {
+        getStores();
       });
     };
     const storesSort = (sortBy) => {
@@ -539,24 +626,35 @@ const deleteMall = (id) => {
 
     return (
       <div className="col-10 p-5 m-auto">
+        <div className="row mx-auto">
+          <button
+            onClick={() => {
+              setModal("addStore");
+              handleShow();
+            }}>
+            Add Store
+          </button>
+        </div>
         <div className="container border">
           <div className="row">
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 storesSort("store_id");
               }}>
               Store ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 storesSort("store_name");
               }}>
               Store Name
             </div>
-            <div className="col h4">Update</div>
-            <div className="col h4">Delete</div>
+            <div className="col h6">Update</div>
+            <div className="col h6">Delete</div>
           </div>
 
           <div>
@@ -567,6 +665,7 @@ const deleteMall = (id) => {
                     <div className="col">{store.store_id}</div>
                     <div className="col text-truncate">{store.store_name}</div>
                     <div
+                      id="interactable"
                       className="col"
                       onClick={() => {
                         setModal("updateStore");
@@ -576,10 +675,15 @@ const deleteMall = (id) => {
                       }}>
                       update
                     </div>
-                    <div className="col" onClick={()=>{
+                    <div
+                      id="interactable"
+                      className="col"
+                      onClick={() => {
                         deleteStore(store.store_id);
                         getStores();
-                    }}>delete</div>
+                      }}>
+                      delete
+                    </div>
                   </div>
                 );
               })}
@@ -589,10 +693,11 @@ const deleteMall = (id) => {
     );
   };
   const ReviewsDisplay = () => {
-
     const deleteReview = (id) => {
       Axios.post("http://localhost:3001/api/deletereview", {
         review_id: id,
+      }).then(() => {
+        getReviews();
       });
     };
 
@@ -627,52 +732,68 @@ const deleteMall = (id) => {
 
     return (
       <div className="col-10 p-5 m-auto">
+        <div className="row mx-auto">
+          <button
+            onClick={() => {
+              setModal("addReview");
+              handleShow();
+            }}>
+            Add Review
+          </button>
+        </div>
         <div className="container border">
           <div className="row">
             <div
-              className="col h4"
+              id="interactable"
+              className="col-1 h6"
               onClick={() => {
                 reviewsSort("review_id");
               }}>
               Review ID
             </div>
             <div
-              className="col h4"
-              onClick={() => {
-                reviewsSort("rating");
-              }}>
-              Rating
-            </div>
-            <div
-              className="col h4"
+              id="interactable"
+              className="col-5 h6"
               onClick={() => {
                 reviewsSort("review");
               }}>
               Review
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col-1 h6"
+              onClick={() => {
+                reviewsSort("rating");
+              }}>
+              Rating
+            </div>
+
+            <div
+              id="interactable"
+              className="col-1 h6"
               onClick={() => {
                 reviewsSort("user_id");
               }}>
               User_ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col-1 h6"
               onClick={() => {
                 reviewsSort("store_id");
               }}>
               Store_ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col-1 h6"
               onClick={() => {
                 reviewsSort("mall_id");
               }}>
               Mall_ID
             </div>
-            <div className="col h4">Update</div>
-            <div className="col h4">Delete</div>
+            <div className="col-1 h6">Update</div>
+            <div className="col-1 h6">Delete</div>
           </div>
 
           <div>
@@ -680,14 +801,15 @@ const deleteMall = (id) => {
               reviews.map((review) => {
                 return (
                   <div className="row" key={review.review_id}>
-                    <div className="col">{review.review_id}</div>
-                    <div className="col">{review.rating}</div>
-                    <div className="col">{review.review}</div>
-                    <div className="col">{review.user_id}</div>
-                    <div className="col">{review.store_id}</div>
-                    <div className="col">{review.mall_id}</div>
+                    <div className="col-1">{review.review_id}</div>
+                    <div className="col-5">{review.review}</div>
+                    <div className="col-1">{review.rating}</div>
+                    <div className="col-1">{review.user_id}</div>
+                    <div className="col-1">{review.store_id}</div>
+                    <div className="col-1">{review.mall_id}</div>
                     <div
-                      className="col"
+                      id="interactable"
+                      className="col-1"
                       onClick={() => {
                         setModal("updateReview");
                         setGlobalReviewID(review.review_id);
@@ -701,10 +823,15 @@ const deleteMall = (id) => {
                       }}>
                       update
                     </div>
-                    <div className="col" onClick={()=>{
+                    <div
+                      id="interactable"
+                      className="col-1"
+                      onClick={() => {
                         deleteReview(review.review_id);
                         getReviews();
-                    }}>delete</div>
+                      }}>
+                      delete
+                    </div>
                   </div>
                 );
               })}
@@ -714,10 +841,11 @@ const deleteMall = (id) => {
     );
   };
   const AnswersDisplay = () => {
-
     const deleteAnswer = (id) => {
       Axios.post("http://localhost:3001/api/deleteanswer", {
         answer_id: id,
+      }).then(() => {
+        getAnswers();
       });
     };
     const answersSort = (sortBy) => {
@@ -739,45 +867,59 @@ const deleteMall = (id) => {
 
     return (
       <div className="col-10 p-5 m-auto">
+        <div className="row mx-auto">
+          <button
+            onClick={() => {
+              setModal("addAnswer");
+              handleShow();
+            }}>
+            Add Answer
+          </button>
+        </div>
         <div className="container border">
           <div className="row">
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 answersSort("answer_id");
               }}>
               Answer ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 answersSort("question_id");
               }}>
               Question ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 answersSort("review_id");
               }}>
               Review ID
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 answersSort("radio_answer");
               }}>
               Radio Answer
             </div>
             <div
-              className="col h4"
+              id="interactable"
+              className="col h6"
               onClick={() => {
                 answersSort("boolean_answer");
               }}>
               Boolean Answer
             </div>
-            <div className="col h4">Update</div>
-            <div className="col h4">Delete</div>
+            <div className="col h6">Update</div>
+            <div className="col h6">Delete</div>
           </div>
 
           <div>
@@ -797,6 +939,7 @@ const deleteMall = (id) => {
                       {answer.boolean_answer === null && "N/A"}
                     </div>
                     <div
+                      id="interactable"
                       className="col"
                       onClick={() => {
                         setModal("updateAnswer");
@@ -807,10 +950,143 @@ const deleteMall = (id) => {
                       }}>
                       update
                     </div>
-                    <div className="col" onClick={()=> {
+                    <div
+                      id="interactable"
+                      className="col"
+                      onClick={() => {
                         deleteAnswer(answer.answer_id);
                         getAnswers();
-                    }}>delete</div>
+                      }}>
+                      delete
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+  const SubCommentsDisplay = () => {
+    const deleteSubReview = (id) => {
+      Axios.post("http://localhost:3001/api/deletesubcomment", {
+        subreview_id: id,
+      }).then(() => {
+        getSubReviews();
+      });
+    };
+
+    const subReviewsSort = (sortBy) => {
+      let temp = subComments;
+
+      if (sortBy === "subreview") {
+        if (ascending) {
+          temp.sort((a, b) => {
+            return ("" + a[sortBy]).localeCompare(b[sortBy]);
+          });
+        } else {
+          temp.sort((a, b) => {
+            return ("" + b[sortBy]).localeCompare(a[sortBy]);
+          });
+        }
+      } else {
+        if (ascending) {
+          temp.sort((a, b) => {
+            return a[sortBy] - b[sortBy];
+          });
+        } else {
+          temp.sort((a, b) => {
+            return b[sortBy] - a[sortBy];
+          });
+        }
+      }
+
+      setSubComments(temp);
+      setAscending(!ascending);
+    };
+
+    return (
+      <div className="col-10 p-5 m-auto">
+        <div className="row mx-auto">
+          <button
+            onClick={() => {
+              setModal("addSubComment");
+              handleShow();
+            }}>
+            Add SubComment
+          </button>
+        </div>
+        <div className="container border">
+          <div className="row">
+            <div
+              id="interactable"
+              className="col h6"
+              onClick={() => {
+                subReviewsSort("subreview_id");
+              }}>
+              SubReview ID
+            </div>
+            <div
+              id="interactable"
+              className="col h6"
+              onClick={() => {
+                subReviewsSort("subreview");
+              }}>
+              SubComment
+            </div>
+            <div
+              id="interactable"
+              className="col h6"
+              onClick={() => {
+                subReviewsSort("review_id");
+              }}>
+              Review_id
+            </div>
+            <div
+              id="interactable"
+              className="col h6"
+              onClick={() => {
+                subReviewsSort("user_id");
+              }}>
+              User_ID
+            </div>
+
+            <div className="col h6">Update</div>
+            <div className="col h6">Delete</div>
+          </div>
+
+          <div>
+            {subComments &&
+              subComments.map((comment) => {
+                return (
+                  <div className="row" key={comment.subreview_id}>
+                    <div className="col">{comment.subreview_id}</div>
+                    <div className="col">{comment.subreview}</div>
+                    <div className="col">{comment.review_id}</div>
+                    <div className="col">{comment.user_id}</div>
+                    <div
+                      id="interactable"
+                      className="col"
+                      onClick={() => {
+                        setModal("updateSubComment");
+                        setGlobalSubReviewID(comment.subreview_id);
+                        setGlobalSubReview(comment.subreview);
+                        setGlobalReviewID(comment.review_id);
+                        setGlobalUserID(comment.user_id);
+
+                        handleShow();
+                      }}>
+                      update
+                    </div>
+                    <div
+                      id="interactable"
+                      className="col"
+                      onClick={() => {
+                        deleteSubReview(comment.subreview_id);
+                        getReviews();
+                      }}>
+                      delete
+                    </div>
                   </div>
                 );
               })}
@@ -820,13 +1096,22 @@ const deleteMall = (id) => {
     );
   };
 
-  //TODO: CREATE SUBCOMMENT DISPLAY
+
+  const getSubReviews = () => {
+    Axios.get("http://localhost:3001/api/getsubreviews", {}).then(
+      (response) => {
+        console.log(response.data);
+        setSubComments(response.data);
+      }
+    );
+  };
 
   const getUsers = () => {
     Axios.get("http://localhost:3001/api/getusers", {}).then((response) => {
       setUsers(response.data);
     });
-  }
+  };
+
   const getMalls = () => {
     Axios.get("http://localhost:3001/api/getmalls", {}).then((response) => {
       setMalls(response.data);
@@ -856,10 +1141,10 @@ const deleteMall = (id) => {
   };
   function ModalsHandler() {
     //for updateQuestions
-    var questionID = "";
-    var question = "";
-    var answerType = "1";
-    var displayQuestion = "1";
+    var questionID;
+    var question;
+    var answerType;
+    var displayQuestion;
 
     //for update malls
     var mallName;
@@ -881,12 +1166,49 @@ const deleteMall = (id) => {
     var radio_answer;
     var boolean_answer;
 
+    //For updating SubComments
+    var subReview;
+
+    //For adding subcomment
+    var review_id;
+
+    //for updating user
+    var admin;
+    var thisusername;
+    var password;
+    var email;
+    const addUser = (adminprop) => {
+      //Submits a new user to the users table
+      Axios.post("http://localhost:3001/api/adduser", {
+        username: thisusername,
+        password: password,
+        email: email,
+        admin: adminprop,
+      }).then(() => {
+        getUsers();
+      });
+    };
+    const updateUser = (adminprop) => {
+      //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
+      Axios.post("http://localhost:3001/api/updateuser", {
+        user_id: globalUserID,
+        username: thisusername,
+        password: password,
+        email: email,
+        admin: adminprop,
+      }).then(() => {
+        getUsers();
+      });
+    };
+
     const addQuestion = () => {
       //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
       Axios.post("http://localhost:3001/api/addquestion", {
         question: question,
         answer_type: answerType,
         display: displayQuestion,
+      }).then(() => {
+        getQuestions();
       });
 
       question = "";
@@ -901,11 +1223,25 @@ const deleteMall = (id) => {
         question: question,
         answer_type: answerType,
         display: displayQuestion,
+      }).then(() => {
+        getQuestions();
       });
       question = "";
       answerType = "1";
       displayQuestion = "1";
     };
+    //Adds a mall to the Malls table
+    const addMall = () => {
+      Axios.post("http://localhost:3001/api/addmall", {
+        mall_name: mallName,
+        mall_address: mallAddress,
+        mall_lat: mallLat,
+        mall_lng: mallLng,
+      }).then(() => {
+        getMalls();
+      });
+    };
+
     const updateMall = () => {
       //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
       Axios.post("http://localhost:3001/api/updatemall", {
@@ -914,6 +1250,17 @@ const deleteMall = (id) => {
         mallAddress: mallAddress,
         mallLat: mallLat,
         mallLng: mallLng,
+      }).then(() => {
+        getMalls();
+      });
+    };
+
+    const addStore = () => {
+      //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
+      Axios.post("http://localhost:3001/api/insertstore", {
+        store_name: storeName,
+      }).then(() => {
+        getStores();
       });
     };
     const updateStore = () => {
@@ -921,9 +1268,27 @@ const deleteMall = (id) => {
       Axios.post("http://localhost:3001/api/updatestore", {
         store_id: globalStoreID,
         store_name: storeName,
+      }).then(() => {
+        getStores();
       });
     };
-
+    const addReview = () => {
+      console.log(rating);
+      console.log(review);
+      console.log(user_id);
+      console.log(store_id);
+      console.log(mall_id);
+      //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
+      Axios.post("http://localhost:3001/api/addreview", {
+        rating: rating,
+        review: review,
+        user_id: user_id,
+        store_id: store_id,
+        mall_id: mall_id,
+      }).then(() => {
+        getReviews();
+      });
+    };
     const updateReview = () => {
       //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
       Axios.post("http://localhost:3001/api/updatereview", {
@@ -933,6 +1298,25 @@ const deleteMall = (id) => {
         user_id: user_id,
         store_id: store_id,
         mall_id: mall_id,
+      }).then(() => {
+        getReviews();
+      });
+    };
+
+    const addAnswer = (boolean_answer) => {
+      console.log(radio_answer);
+      console.log(boolean_answer);
+      console.log(questionID);
+      console.log(review_id);
+      //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
+
+      Axios.post("http://localhost:3001/api/addanswer", {
+        radio_answer: radio_answer,
+        boolean_answer: boolean_answer,
+        question_id: questionID,
+        review_id: review_id,
+      }).then(() => {
+        getAnswers();
       });
     };
     const updateAnswer = () => {
@@ -940,8 +1324,270 @@ const deleteMall = (id) => {
       Axios.post("http://localhost:3001/api/updateanswer", {
         answer_id: globalAnswerID,
         radio_answer: radio_answer,
-        boolean_answer: boolean_answer
+        boolean_answer: boolean_answer,
+      }).then(() => {
+        getAnswers();
       });
+    };
+
+    const addSubComment = () => {
+      //Submits a SubComment to the SubComment table
+
+      Axios.post("http://localhost:3001/api/addsubreview", {
+        subcomment: subReview,
+        review_id: review_id,
+        user_id: user_id,
+      }).then(() => {
+        getSubReviews();
+      });
+    };
+    const updateSubComment = () => {
+      //Submits a review to the reviews table, then uses the ID of the new review as teh review_id of the answers
+      Axios.post("http://localhost:3001/api/updatesubreview", {
+        subreview_id: globalSubReviewID,
+        subreview: subReview,
+      }).then(() => {
+        getSubReviews();
+      });
+    };
+
+    const UpdateUserModal = () => {
+      const [updateAdmin, setUpdateAdmin] = useState("");
+
+      const handleAdminChange = (yesOrNoAdmin) => {
+        admin = yesOrNoAdmin;
+        console.log(admin);
+        setUpdateAdmin(admin);
+      };
+
+      admin = globalAdmin;
+      thisusername = globalUserName.slice();
+      email = globalEmail.slice();
+      password = globalPassword.slice();
+      mall_id = globalMallID;
+
+      useEffect(() => {
+        setUpdateAdmin(globalAdmin);
+      }, []);
+
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Update User</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form">
+                <div className="form-group">
+                  <label>Username</label>
+                  <textarea
+                    className="form-control"
+                    id="question"
+                    rows="3"
+                    defaultValue={thisusername}
+                    onChange={(e) => {
+                      thisusername = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group">
+                  <label>Password (Will be hashed)</label>
+                  <textarea
+                    className="form-control"
+                    id="question"
+                    rows="3"
+                    defaultValue={password}
+                    onChange={(e) => {
+                      password = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <textarea
+                    className="form-control"
+                    id="question"
+                    rows="3"
+                    defaultValue={email}
+                    onChange={(e) => {
+                      email = e.target.value;
+                    }}></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label className="h6">Admin</label>
+                  <div className="form-group row radio">
+                    <div className="row border-bottom">
+                      <div className="col">
+                        <label>False</label>
+                        <input
+                          type="radio"
+                          value="0"
+                          name="is_admin"
+                          onChange={() => {
+                            handleAdminChange(0);
+                          }}
+                          checked={updateAdmin === 0}
+                        />
+                      </div>
+                      <div className="col">
+                        <label>True</label>
+                        <input
+                          type="radio"
+                          value="1"
+                          name="is_admin"
+                          onChange={() => {
+                            handleAdminChange(1);
+                          }}
+                          checked={updateAdmin === 1}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Favorite mall_id</label>
+                    <div className="form-group row my-2">
+                      <label className="col">(FK) Mall_ID: </label>
+                      <input
+                        readOnly
+                        className="col"
+                        type="number"
+                        value={globalMallID}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  updateUser(updateAdmin);
+                  handleClose();
+                }}>
+                Update User
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
+    const AddUserModal = () => {
+      const [updateAdmin, setUpdateAdmin] = useState("");
+
+      const handleAdminChange = (yesOrNoAdmin) => {
+        admin = yesOrNoAdmin;
+        setUpdateAdmin(admin);
+      };
+
+      useEffect(() => {
+        setUpdateAdmin(globalAdmin);
+      }, []);
+
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Add User</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form">
+                <div className="form-group">
+                  <label>Username</label>
+                  <textarea
+                    className="form-control"
+                    id="question"
+                    rows="3"
+                    onChange={(e) => {
+                      thisusername = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group">
+                  <label>Password (Will be hashed)</label>
+                  <textarea
+                    className="form-control"
+                    id="question"
+                    rows="3"
+                    defaultValue={password}
+                    onChange={(e) => {
+                      password = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <textarea
+                    className="form-control"
+                    id="question"
+                    rows="3"
+                    defaultValue={email}
+                    onChange={(e) => {
+                      email = e.target.value;
+                    }}></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label className="h6">Admin</label>
+                  <div className="form-group row radio">
+                    <div className="row border-bottom">
+                      <div className="col">
+                        <label>False</label>
+                        <input
+                          type="radio"
+                          value="0"
+                          name="is_admin"
+                          onChange={() => {
+                            handleAdminChange(0);
+                          }}
+                          checked={admin === 0}
+                        />
+                      </div>
+                      <div className="col">
+                        <label>True</label>
+                        <input
+                          type="radio"
+                          value="1"
+                          name="is_admin"
+                          onChange={() => {
+                            handleAdminChange(1);
+                          }}
+                          checked={admin === 1}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Favorite mall_id</label>
+                    <div className="form-group row my-2">
+                      <label className="col">(FK) Mall_ID: </label>
+                      <input
+                        readOnly
+                        className="col"
+                        type="number"
+                        value={globalMallID}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  addUser(admin);
+                  handleClose();
+                }}>
+                Add user
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
     };
 
     //The Modal to be used when creating a new question
@@ -970,7 +1616,7 @@ const deleteMall = (id) => {
                     }}></textarea>
                 </div>
                 <div className="form-group">
-                  <label className="h4">Answer Type</label>
+                  <label className="h6">Answer Type</label>
                   <div
                     className="form-group row radio"
                     onChange={(e) => {
@@ -993,7 +1639,7 @@ const deleteMall = (id) => {
                     onChange={(e) => {
                       displayQuestion = e.target.value;
                     }}>
-                    <label className="h4 mt-5">Display?</label>
+                    <label className="h6 mt-5">Display?</label>
                     <div className="row ">
                       <div className="col">
                         <label>Dont display</label>
@@ -1074,7 +1720,7 @@ const deleteMall = (id) => {
                     }}></textarea>
                 </div>
                 <div className="form-group">
-                  <label className="h4">Answer Type</label>
+                  <label className="h6">Answer Type</label>
                   <div className="form-group row radio">
                     <div className="row border-bottom">
                       <div className="col">
@@ -1109,7 +1755,7 @@ const deleteMall = (id) => {
                       displayQuestion = e.target.value;
                       //setDisplayQuestion(e.target.value);
                     }}>
-                    <label className="h4 mt-5">Display?</label>
+                    <label className="h6 mt-5">Display?</label>
                     <div className="row ">
                       <div className="col">
                         <label>Dont display</label>
@@ -1157,7 +1803,79 @@ const deleteMall = (id) => {
         </>
       );
     };
+    const AddMallModal = () => {
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Add Mall</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form p-5">
+                <div className="form-group my-2">
+                  <label>MallName</label>
+                  <textarea
+                    className="form-control"
+                    id="mall name"
+                    rows="3"
+                    onChange={(e) => {
+                      mallName = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group my-2">
+                  <label>Mall Address</label>
+                  <textarea
+                    className="form-control"
+                    id="mall name"
+                    rows="3"
+                    onChange={(e) => {
+                      mallAddress = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">Mall Lat: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="any"
+                    id="mall lng"
+                    onChange={(e) => {
+                      mallLat = e.target.value;
+                    }}
+                  />
+                </div>
 
+                <div className="form-group row my-2">
+                  <label className="col">Mall Lng: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="any"
+                    id="mall lng"
+                    onChange={(e) => {
+                      mallLng = e.target.value;
+                    }}
+                  />
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  addMall();
+                  handleClose();
+                }}>
+                Add mall
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
     const UpdateMallModal = () => {
       mallName = globalMallName.slice();
       mallAddress = globalMallAddress.slice();
@@ -1240,6 +1958,44 @@ const deleteMall = (id) => {
         </>
       );
     };
+    const AddStoreModal = () => {
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Add Store</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form p-5">
+                <div className="form-group my-2">
+                  <label>Store Name</label>
+                  <textarea
+                    className="form-control"
+                    id="mall name"
+                    rows="3"
+                    onChange={(e) => {
+                      storeName = e.target.value;
+                    }}></textarea>
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  addStore();
+                  handleClose();
+                }}>
+                Add Store
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
     const UpdateStoreModal = () => {
       storeName = globalStoreName.slice();
 
@@ -1274,7 +2030,7 @@ const deleteMall = (id) => {
                   updateStore();
                   handleClose();
                 }}>
-                Update mall
+                Update Store
               </Button>
             </Modal.Footer>
           </Modal>
@@ -1282,6 +2038,97 @@ const deleteMall = (id) => {
       );
     };
 
+    const AddReviewModal = () => {
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Add Review</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form p-5">
+                <div className="form-group my-2">
+                  <label>Review</label>
+                  <textarea
+                    className="form-control"
+                    id="mall name"
+                    rows="3"
+                    onChange={(e) => {
+                      review = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">Rating: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="1"
+                    id="Rating"
+                    min="1"
+                    max="5"
+                    onChange={(e) => {
+                      rating = e.target.value;
+                    }}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) User ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="1"
+                    id="UserID"
+                    min="0"
+                    onChange={(e) => {
+                      user_id = e.target.value;
+                    }}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) Store ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="1"
+                    min="0"
+                    id="StoreID"
+                    onChange={(e) => {
+                      store_id = e.target.value;
+                    }}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) Mall ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="1"
+                    min="0"
+                    id="MallID"
+                    onChange={(e) => {
+                      mall_id = e.target.value;
+                    }}
+                  />
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  addReview();
+                  handleClose();
+                }}>
+                Add Review
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
     const UpdateReviewModal = () => {
       rating = globalRating;
       review = globalReview.slice();
@@ -1377,7 +2224,121 @@ const deleteMall = (id) => {
                   updateReview();
                   handleClose();
                 }}>
-                Update mall
+                Update review
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
+    const AddAnswerModal = () => {
+      const [updateThisAnswer, setUpdateThisAnswer] = useState("");
+
+      const handleBooleanAnswerChange = (answer) => {
+        answerType = answer;
+        setUpdateThisAnswer(answerType);
+      };
+
+      useEffect(() => {
+        if (boolean_answer !== null) {
+          setUpdateThisAnswer(0);
+        } else {
+          setUpdateThisAnswer(1);
+        }
+      }, []);
+
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Add Answer</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form">
+                <div className="form-group row">
+                  <label className="col h6">Radio answer (1/5): </label>
+                  <input
+                    className="col"
+                    type="number"
+                    step="1"
+                    min={1}
+                    max={5}
+                    id="radio_answer"
+                    onChange={(e) => {
+                      radio_answer = e.target.value;
+                      handleBooleanAnswerChange(-1);
+                    }}
+                  />
+                </div>
+
+                <div className="form-group row">
+                  <label className="col h6">Boolean Answer</label>
+                  <div className="form-group row radio col">
+                    <div className="row border-bottom">
+                      <div className="col">
+                        <label>False:</label>
+                        <input
+                          type="radio"
+                          value="0"
+                          name="boolean_answer"
+                          onChange={() => {
+                            handleBooleanAnswerChange(0);
+                            radio_answer = 0;
+                          }}
+                          checked={updateThisAnswer === 0}
+                        />
+                      </div>
+                      <div className="col">
+                        <label>True: </label>
+                        <input
+                          type="radio"
+                          value="1"
+                          name="boolean_answer"
+                          onChange={() => {
+                            handleBooleanAnswerChange(1);
+                            radio_answer = 0;
+                          }}
+                          checked={updateThisAnswer === 1}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) Review_ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    min="1"
+                    onChange={(e) => {
+                      review_id = e.target.value;
+                    }}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) Question_ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    min="1"
+                    onChange={(e) => {
+                      questionID = e.target.value;
+                    }}
+                  />
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  addAnswer(updateThisAnswer);
+                  handleClose();
+                }}>
+                Update question
               </Button>
             </Modal.Footer>
           </Modal>
@@ -1387,34 +2348,21 @@ const deleteMall = (id) => {
     const UpdateAnswerModal = () => {
       const [updateThisAnswer, setUpdateThisAnswer] = useState("");
 
-      
       const handleBooleanAnswerChange = (answer) => {
         answerType = answer;
         setUpdateThisAnswer(answerType);
       };
-      
-
-      /*
-      const handleDisplayChange = (shallYouDisplay) => {
-        console.log(shallYouDisplay);
-        displayQuestion = shallYouDisplay;
-        setUpdateQuestionDisplay(displayQuestion);
-      };
-      */
 
       radio_answer = globalRadioAnswer;
       boolean_answer = globalBooleanAnswer;
 
-      
       useEffect(() => {
-        if (boolean_answer!== null) {
-            setUpdateThisAnswer(0);
-        }else{
-            setUpdateThisAnswer(1);
+        if (boolean_answer !== null) {
+          setUpdateThisAnswer(0);
+        } else {
+          setUpdateThisAnswer(1);
         }
-        
       }, []);
-      
 
       return (
         <>
@@ -1443,7 +2391,7 @@ const deleteMall = (id) => {
                 )}
                 {boolean_answer !== null && (
                   <div className="form-group">
-                    <label className="h4">Boolean Answer</label>
+                    <label className="h6">Boolean Answer</label>
                     <div className="form-group row radio">
                       <div className="row border-bottom">
                         <div className="col">
@@ -1493,6 +2441,137 @@ const deleteMall = (id) => {
         </>
       );
     };
+
+    const AddSubCommentModal = () => {
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Add SubComment</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form p-5">
+                <div className="form-group my-2">
+                  <label>SubComment</label>
+                  <textarea
+                    className="form-control"
+                    id="mall name"
+                    rows="3"
+                    onChange={(e) => {
+                      subReview = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) Review_ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    onChange={(e) => {
+                      review_id = e.target.value;
+                    }}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) User_ID: </label>
+                  <input
+                    className="col"
+                    type="number"
+                    onChange={(e) => {
+                      user_id = e.target.value;
+                    }}
+                  />
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  addSubComment();
+                  handleClose();
+                }}>
+                Add SubComment
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
+    const UpdateSubCommentModal = () => {
+      subReview = globalSubReview.slice();
+      user_id = globalUserID;
+      store_id = globalStoreID;
+      mall_id = globalMallID;
+
+      return (
+        <>
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header>
+              <Modal.Title>Update SubComment</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="form p-5">
+                <div className="form-group my-2">
+                  <label>SubComment</label>
+                  <textarea
+                    className="form-control"
+                    id="mall name"
+                    rows="3"
+                    defaultValue={subReview}
+                    onChange={(e) => {
+                      subReview = e.target.value;
+                    }}></textarea>
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(PK) SubReview_ID: </label>
+                  <input
+                    readOnly
+                    className="col"
+                    type="number"
+                    value={globalSubReviewID}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) Review_ID: </label>
+                  <input
+                    readOnly
+                    className="col"
+                    type="number"
+                    value={globalReviewID}
+                  />
+                </div>
+                <div className="form-group row my-2">
+                  <label className="col">(FK) User_ID: </label>
+                  <input
+                    readOnly
+                    className="col"
+                    type="number"
+                    value={globalUserID}
+                  />
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  updateSubComment();
+                  handleClose();
+                }}>
+                Update SubComment
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      );
+    };
+
     switch (modal) {
       case "addQuestion":
         return (
@@ -1506,10 +2585,22 @@ const deleteMall = (id) => {
             <UpdateQuestionModal />
           </>
         );
+      case "addMall":
+        return (
+          <>
+            <AddMallModal />
+          </>
+        );
       case "updateMall":
         return (
           <>
             <UpdateMallModal />
+          </>
+        );
+      case "addStore":
+        return (
+          <>
+            <AddStoreModal />
           </>
         );
       case "updateStore":
@@ -1518,10 +2609,22 @@ const deleteMall = (id) => {
             <UpdateStoreModal />
           </>
         );
+      case "addReview":
+        return (
+          <>
+            <AddReviewModal />
+          </>
+        );
       case "updateReview":
         return (
           <>
             <UpdateReviewModal />
+          </>
+        );
+      case "addAnswer":
+        return (
+          <>
+            <AddAnswerModal />
           </>
         );
       case "updateAnswer":
@@ -1530,6 +2633,31 @@ const deleteMall = (id) => {
             <UpdateAnswerModal />
           </>
         );
+      case "addSubComment":
+        return (
+          <>
+            <AddSubCommentModal />
+          </>
+        );
+      case "updateSubComment":
+        return (
+          <>
+            <UpdateSubCommentModal />
+          </>
+        );
+      case "addUser":
+        return (
+          <>
+            <AddUserModal />
+          </>
+        );
+      case "updateUser":
+        return (
+          <>
+            <UpdateUserModal />
+          </>
+        );
+
       default:
         return (
           <>
@@ -1581,6 +2709,13 @@ const deleteMall = (id) => {
           <div className="row flex m-5">
             <DisplayNav />
             <ReviewsDisplay />
+          </div>
+        );
+      case "subcomments":
+        return (
+          <div className="row flex m-5">
+            <DisplayNav />
+            <SubCommentsDisplay />
           </div>
         );
       default:

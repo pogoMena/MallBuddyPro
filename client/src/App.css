@@ -1,7 +1,14 @@
 * {
+    font-family: "Segoe UI";
     box-sizing: border-box;
 }
-
+#mbpiconmain{
+    height: 25vh;
+}
+#interactable:hover{
+background-color:lightblue;
+cursor: pointer;
+}
 
 .App{
     text-align: center;
@@ -36,7 +43,7 @@
     left:50%;
     transform: translateX(-50%);
     z-index: 10;
-    width: 25vw;
+    width: 50vw;
 }
 .combobox-input {
     width: 100%;

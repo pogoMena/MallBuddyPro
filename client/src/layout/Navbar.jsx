@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Axios from "axios";
+import Popover from "./infoPopover";
 
 export default function Navbar(props) {
   const userName = props.userName;
@@ -63,21 +64,16 @@ export default function Navbar(props) {
     <div>
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
         <div className="container-fluid">
-          <a className="navbar-brand" href="/">
-            MallBuddy Pro
-          </a>
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle Navigation">
-            <span className="navbar-toggler-icon"></span>
-
-            {links}
-          </button>
+          <div className="row">
+            <div className="col-10 text-center">
+              <a className="navbar-brand" href="/">
+                MallBuddy Pro
+              </a>
+            </div>
+            <div className="col-2">
+              <Popover />
+            </div>
+          </div>
           <div className="">{links}</div>
         </div>
       </nav>

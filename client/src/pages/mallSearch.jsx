@@ -144,7 +144,9 @@ const PlacesAutocomplete = ({
     Axios.post("http://localhost:3001/api/getusersfavoritemall", {
       userName,
     }).then((response)=>{
-        console.log(response.data[0])
+
+        if (response.data[0]) {
+        
         let parsedResults = {
           mall_name: response.data[0].mall_name,
           lat: response.data[0].mall_lat,
@@ -154,10 +156,11 @@ const PlacesAutocomplete = ({
 
         console.log(parsedResults);
         setMallFinalSelection(parsedResults);
-        //
 
-        //
         navigate("/itemSearch");
+    }else{
+        window.alert("No favorite mall saved.");
+    }
     });
   }
 
@@ -183,9 +186,11 @@ const PlacesAutocomplete = ({
         </Combobox>
       </div>
       <div className="col-2">
-        {true && (
+        {userName && (
           <Button
+            style={{ fontSize: 10 }}
             variant="secondary"
+            size="sm"
             onClick={() => {
               goToFavoriteMall();
             }}>
