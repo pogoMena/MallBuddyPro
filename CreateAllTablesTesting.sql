@@ -37,10 +37,9 @@ review TEXT,
 user_id INT NOT NULL,
 store_id INT NOT NULL,
 mall_id INT NOT NULL,
-FOREIGN KEY (user_id) REFERENCES users(user_id),
-FOREIGN KEY (store_id) REFERENCES stores(store_id),
-FOREIGN KEY (mall_id) REFERENCES malls(mall_id)
-ON DELETE CASCADE
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+FOREIGN KEY (store_id) REFERENCES stores(store_id) ON DELETE CASCADE,
+FOREIGN KEY (mall_id) REFERENCES malls(mall_id) ON DELETE CASCADE
 );
 
 CREATE TABLE subreviews (
@@ -48,9 +47,8 @@ subreview_id int AUTO_INCREMENT PRIMARY KEY,
 subreview TEXT NOT NULL,
 review_id INT NOT NULL,
 user_id INT NOT NULL,
-FOREIGN KEY (review_id) REFERENCES reviews(review_id),
-FOREIGN KEY (user_id) REFERENCES users(user_id)
-ON DELETE CASCADE
+FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE questions (
@@ -67,9 +65,8 @@ review_id INT NOT NULL,
 text_answer varchar(255),
 radio_answer int,
 boolean_answer boolean,
-FOREIGN KEY (question_id) REFERENCES questions(question_id),
-FOREIGN KEY (review_id) REFERENCES reviews(review_id)
-ON DELETE CASCADE
+FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
+FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE
 );
 
 INSERT INTO questions (question, answer_type, display)
